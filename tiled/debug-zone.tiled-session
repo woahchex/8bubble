@@ -1,0 +1,74 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "debug.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "cave-door.tsx": {
+            "dynamicWrapping": true
+        },
+        "debug.tmx": {
+            "expandedObjectLayers": [
+                5,
+                4
+            ],
+            "scale": 4,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 1600.125,
+                "y": 2404
+            }
+        },
+        "demo.tmx": {
+            "expandedObjectLayers": [
+                5
+            ],
+            "scale": 1.5,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 4000.333333333333,
+                "y": 4000
+            }
+        },
+        "thumbnails.tsx": {
+            "scaleInDock": 1
+        },
+        "tilemap.tsx": {
+            "scaleInDock": 1
+        },
+        "tilemap2.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1.5,
+            "scaleInEditor": 1
+        }
+    },
+    "last.exportedFilePath": "D:/VSCode/lua/chexcore/game/scenes/debug",
+    "last.imagePath": "D:/VSCode/lua/chexcore/game/assets/images",
+    "map.height": 200,
+    "map.lastUsedExportFilter": "Lua files (*.lua)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 200,
+    "openFiles": [
+        "debug.tmx",
+        "demo.tmx"
+    ],
+    "project": "debug-zone.tiled-project",
+    "property.type": "object",
+    "recentFiles": [
+        "demo.tmx",
+        "debug.tmx",
+        "tilemap2.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    },
+    "tileset.type": 1
+}
