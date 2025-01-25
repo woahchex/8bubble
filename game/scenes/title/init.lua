@@ -56,26 +56,11 @@ local logoLayer = scene:AddLayer(Layer.new("Logo", RESOLUTION.X, RESOLUTION.Y))
 
 logoLayer:Adopt(require"game.types.logo")
 
-logoLayer:Adopt(Gui.new{
-    Texture = Texture.new("game/scenes/title/nitrochex.png"),
-    Size = V{240, 24}/1.5,
-    GoalSize = V{240, 24}/1.5,
-    AnchorPoint = V{1,1},
-    Position = V{320,180}-V{4,4},
-    OnHoverStart = function (self)
-        self.GoalSize = V{240, 24}
-    end,
-    OnHoverEnd = function (self)
-        self.GoalSize = V{240, 24}/1.5
-    end,
-    Update = function (self)
-        self.Size = self.Size:Lerp(self.GoalSize, 0.2)
-    end
-})
+
 
 local playBubble
 local playButton = logoLayer:Adopt(Gui.new{
-    Position = V{0,100},
+    Position = V{0,95},
     AnchorPoint = V{0.5,0.5},
     Size = V{64,64},
     GoalSize = V{64,64},
@@ -109,6 +94,32 @@ local playButton = logoLayer:Adopt(Gui.new{
             playBubble.Size2 = V{120,120}
             self.GoalSize = V{70,70}
         end
+    end
+})
+
+
+local water1 = logoLayer:Adopt(Prop.new{
+    Texture = Texture.new("game/scenes/title/water.png"),
+    Size = V{256,256},
+    Color = V{1,1,1,0.9},
+    Update = function (self)
+        self.Position = V{0,100} + (V{Chexcore._clock/6,0}%1)*256
+    end
+})
+local water2 = logoLayer:Adopt(Prop.new{
+    Texture = Texture.new("game/scenes/title/water.png"),
+    Size = V{256,256},
+    Color = V{1,1,1,0.9},
+    Update = function (self)
+        self.Position = V{-256,100} + (V{Chexcore._clock/6,0}%1)*256
+    end
+})
+local water3 = logoLayer:Adopt(Prop.new{
+    Texture = Texture.new("game/scenes/title/water.png"),
+    Size = V{256,256},
+    Color = V{1,1,1,0.9},
+    Update = function (self)
+        self.Position = V{-512,100} + (V{Chexcore._clock/6,0}%1)*256
     end
 })
 
@@ -174,4 +185,36 @@ playBubble = logoLayer:Adopt(Prop.new{
 })
 
 
+
+local pillarOffsetL = V{-16,32}
+local pillarOffsetR = V{16,32}
+local pillar1 = logoLayer:Adopt(Prop.new{
+    Position = V{-RESOLUTION.X/2, RESOLUTION.Y/2} + pillarOffsetL,
+    AnchorPoint = V{0,1},
+    Size = V{193,161},
+    Texture = Texture.new("game/scenes/title/left-pillar.png")
+})
+local pillar2 = logoLayer:Adopt(Prop.new{
+    Position = V{RESOLUTION.X/2, RESOLUTION.Y/2} + pillarOffsetR,
+    AnchorPoint = V{1,1},
+    Size = V{193,161},
+    Texture = Texture.new("game/scenes/title/right-pillar.png")
+})
+
+logoLayer:Adopt(Gui.new{
+    Texture = Texture.new("game/scenes/title/nitrochex.png"),
+    Size = V{240, 24}/1.5,
+    GoalSize = V{240, 24}/1.5,
+    AnchorPoint = V{1,1},
+    Position = V{320,180}-V{4,4},
+    OnHoverStart = function (self)
+        self.GoalSize = V{240, 24}
+    end,
+    OnHoverEnd = function (self)
+        self.GoalSize = V{240, 24}/1.5
+    end,
+    Update = function (self)
+        self.Size = self.Size:Lerp(self.GoalSize, 0.2)
+    end
+})
 return scene
