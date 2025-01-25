@@ -6,7 +6,7 @@ require "chexcore"
 
 -- Scenes contain all the components of the game
 function love.load()
-    
+    Chexcore:AddType("game.types.gamescene")
 
     local scene = require("game.scenes.title.init")
     Chexcore.MountScene(scene)
