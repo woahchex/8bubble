@@ -31,6 +31,24 @@ local function hsv_to_rgb(h, s, v)
     return r+m, g+m, b+m
 end
 
+local function hex_to_rgb(hex)
+    -- remove the '#' if it's there
+    hex = hex:gsub("#", "")
+
+    -- check for 3-digit hex
+    if #hex == 3 then
+        return tonumber(hex:sub(1, 1) .. hex:sub(1, 1), 16) / 255,
+               tonumber(hex:sub(2, 2) .. hex:sub(2, 2), 16) / 255,
+               tonumber(hex:sub(3, 3) .. hex:sub(3, 3), 16) / 255
+    elseif #hex == 6 then
+        return tonumber(hex:sub(1, 2), 16) / 255,
+               tonumber(hex:sub(3, 4), 16) / 255,
+               tonumber(hex:sub(5, 6), 16) / 255
+    else
+        error("Invalid hex color format: " .. hex)
+    end
+end
+
 local min, max = math.min, math.max
 local function rgb_to_hsv(r, g, b)
     local max = max(r, g, b)
@@ -81,7 +99,9 @@ function Vector.HSV(h, s, v)
 end
 _G.HSV = Vector.HSV
 
-
+function Vector.Hex(hex)
+    return V{hex_to_rgb(hex)}
+end
 
 -- SET A METATABLE FOR VECTOR FOR __call
 setmetatable(Vector, {

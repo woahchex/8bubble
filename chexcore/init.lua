@@ -179,7 +179,7 @@ function Chexcore.UnmountScene(scene)
 end
 
 local fps = 0
-Chexcore.FrameLimit = 500
+Chexcore.FrameLimit = 60
 local frameTime = 0
 -- local mode = "web"
 

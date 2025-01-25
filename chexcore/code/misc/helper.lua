@@ -809,7 +809,6 @@ local function deepCopy(tab)
     local nt = smt({}, gmt(tab))
     for k, v in pairs(tab) do
         if type(v) == "table" then
-            print(v)
             if k ~= "_parent" then nt[k] = deepCopy(v) end
         else
             nt[k] = v
@@ -925,7 +924,6 @@ end
 -- a and b are semi-major and semi-minor axes respectively
 -- phi is the angle in radians between the x-axis and the major axis
 
-print("FLOOR", math.floor(1.2))
 
 function love.graphics.ellipse2(mode, x, y, a, b, phi, points)
     phi = phi or 0
