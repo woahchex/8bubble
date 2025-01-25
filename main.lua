@@ -8,7 +8,7 @@ require "chexcore"
 function love.load()
     Chexcore:AddType("game.types.gamescene")
 
-    local scene = require("game.scenes.title.init")
+    local scene = require("game.scenes.debug.init")
     Chexcore.MountScene(scene)
 
 
