@@ -3,8 +3,6 @@ local scene = GameScene.new()
 
 local gameLayer = scene:GetLayer("Gameplay")
 
-local decelSpeed = 0.01
-
 local balls = gameLayer:Adopt(Prop.new{
     Visible = false
 })
@@ -17,16 +15,6 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     Position = V{0, 0},
     Direction = V{0, 0},
     Velocity = 0,
-
-    Update = function(self)
-        if self.Velocity > 0 then
-            self.Position = self.Position + (self.Direction * self.Velocity)
-            self.Velocity = self.Velocity - decelSpeed
-        end
-
-        -- updating framevalues
-        self.FramesSinceHit = self.FramesSinceHit + 1
-    end,
 
     OnSelectStart = function(self)
         if self.Velocity <= 0 then
@@ -45,6 +33,13 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
         cueStick.Visible = false
         cueStick.Active = false
     end
+})
+
+local bubble1 = balls:Adopt(Bubble.new():Properties{
+    Name = "Test",
+    Size = V{16,16},
+    AnchorPoint = V{0.5,0.5},
+    Position = V{40, 30},
 })
 
 cueStick = gameLayer:Adopt(Gui.new{
@@ -81,40 +76,6 @@ cueStick = gameLayer:Adopt(Gui.new{
     end
 })
 
-local bubble1 = balls:Adopt(Gui.new{
-    Name = "Test",
-    Size = V{16,16},
-    AnchorPoint = V{0.5,0.5},
-    Position = V{40, 0},
-    Direction = V{0, 0},
-    Velocity = 0,
 
-    Update = function(self)
-        local bubbles = self:GetParent():GetChildren()
-
-        if self.Velocity <= 0 then
-            local collisions = {}
-            
-            for i, ball in ipairs(bubbles) do
-                if ball.Name ~= self.Name and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
-                    collisions[#collisions + 1] = ball
-                end
-            end
-
-            if #collisions > 0 then
-                local bubble = collisions[1]
-                local vector = self.Position - bubble.Position
-
-                self.Direction = vector:Normalize()
-                self.Velocity = bubble.Velocity * 0.8
-            end
-        end
-
-        if self.Velocity > 0 then
-            self.Position = self.Position + (self.Direction * self.Velocity)
-            self.Velocity = self.Velocity - decelSpeed
-        end
-    end
-})
 
 return scene

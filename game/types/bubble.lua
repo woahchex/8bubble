@@ -22,7 +22,14 @@ local Bubble = {
         [7] = Texture.new("game/assets/images/7.png"),
         [8] = Texture.new("game/assets/images/8.png"),
     },
+    
+    Size = V{16, 16},
+    Position = V{0, 0},
+    Rotation = 0,
+    Direction = V{0, 0},
+    Velocity = 0,
     Threshold = 16,
+    DecelSpeed = 0.01,
 
     -- internal properties
     _super = "Gui",      -- Supertype
@@ -40,7 +47,46 @@ function Bubble.new()
 end
 
 function Bubble:Update(dt)
-    
+    if self.Velocity > 0 then
+        local bubbles = self:GetParent():GetChildren()
+        local collisions = {}
+            
+        for i, ball in ipairs(bubbles) do
+            if ball.Name ~= self.Name and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
+                collisions[#collisions + 1] = ball
+            end
+        end
+
+        if #collisions > 0 then
+            local bubble = collisions[1]
+            
+            local vector1 = self.Direction * self.Velocity
+            local vector2 = bubble.Direction * bubble.Velocity
+            local n = (self.Position - bubble.Position):Normalize()
+
+            local a1 = 0 + (vector1 * n)
+            local a2 = 0 + (vector2 * n)
+            local p = (2.0 * (a1 - a2))
+
+            local newVector1 = vector1 - (n * p)
+            local newVector2 = vector2 + (n * p)
+
+            self.Direction = newVector1:Normalize()
+            bubble.Direction = newVector2:Normalize()
+
+            self.Velocity = newVector1:Magnitude() * 0.8
+            bubble.Velocity = newVector2:Magnitude() * 0.8
+
+            self.FramesSinceHit = 0
+            bubble.FramesSinceHit = 0
+        end
+
+        self.Position = self.Position + (self.Direction * self.Velocity)
+        self.Velocity = self.Velocity - self.DecelSpeed
+    end
+
+    -- updating framevalues
+    self.FramesSinceHit = self.FramesSinceHit + 1
 end
 
 local lg, floor = love.graphics, math.floor
