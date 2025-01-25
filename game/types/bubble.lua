@@ -59,6 +59,7 @@ function Bubble:Update(dt)
 
         if #collisions > 0 then
             local bubble = collisions[1]
+            print("Collision")
             
             local vector1 = self.Direction * self.Velocity
             local vector2 = bubble.Direction * bubble.Velocity
@@ -76,6 +77,8 @@ function Bubble:Update(dt)
 
             self.Velocity = newVector1:Magnitude() * 0.8
             bubble.Velocity = newVector2:Magnitude() * 0.8
+
+            self.Position = bubble.Position + (n * 16)
 
             self.FramesSinceHit = 0
             bubble.FramesSinceHit = 0
