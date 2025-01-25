@@ -29,7 +29,7 @@ local Bubble = {
     Direction = V{0, 0},
     Velocity = 0,
     Threshold = 16,
-    DecelSpeed = 0.01,
+    DecelSpeed = 0.015,
 
     -- internal properties
     _super = "Gui",      -- Supertype
@@ -48,6 +48,7 @@ end
 
 function Bubble:Update(dt)
     if self.Velocity > 0 then
+        self.Velocity = math.clamp(self.Velocity, 0, 5)
         local bubbles = self:GetParent():GetChildren()
         local collisions = {}
             
@@ -199,10 +200,6 @@ function Bubble:Draw(tx, ty)
     love.graphics.circle("fill",point.X-tx+2+bubbleOfs.Y, point.Y-ty+4, 1)
     -- love.graphics.circle("fill",self.Position[2]+4+bubbleOfs.X+sx/4-ty, CANVAS_SIZE.Y/2+0+bubbleOfs.Y, 1)
 
-
-
-
-
     if not self.DrawOverChildren and self:HasChildren() then
         self:DrawChildren(tx, ty)
     end
@@ -229,6 +226,8 @@ function Bubble:BallToWallCollision()
             self:SetEdge(face, self.Tilemap:GetEdge(face=="top" and "bottom" or "top", tileNo))
             self.Position.X = self.Position.X + (face=="top" and -1 or 1)
         end
+        self.Velocity = self.Velocity * 0.8
+        self.Health = math.clamp(self.Health - 1, 0, 8)
         self.FramesSinceHit = 0
         break
         -- self.Position = self.Position - V{hDist, vDist}
