@@ -45,52 +45,72 @@ function Bubble.new()
     myObj.DrawScale = V{1,1}
     return Bubble:Connect(myObj)
 end
+    -- update position before velocity, so that there is at least 1 frame of whatever Velocity is set by prev frame
+    local MAX_Y_DIST = 1
+    local MAX_X_DIST = 1
+    
+
 
 function Bubble:Update(dt)
     if self.Velocity > 0 then
-        self.Velocity = math.clamp(self.Velocity, 0, 5)
+        local subdivisions = 1
+        if math.abs(self.Velocity) > MAX_X_DIST then
+            subdivisions = math.floor(1+math.abs(self.Velocity)/MAX_X_DIST)
+        end
+    
+        if math.abs(self.Velocity) > MAX_Y_DIST then
+            subdivisions = math.max(subdivisions, math.floor(1+math.abs(self.Velocity)/MAX_Y_DIST))
+        end
+        local posDelta = (self.Direction * self.Velocity)
+        
+        self.Velocity = self.Velocity - self.DecelSpeed
         local bubbles = self:GetParent():GetChildren()
         local collisions = {}
-            
-        for i, ball in ipairs(bubbles) do
-            if ball ~= self and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
-                collisions[#collisions + 1] = ball
+        for _ = 1, subdivisions do
+            self.Position = self.Position + posDelta/subdivisions
+            for i, ball in ipairs(bubbles) do
+                if ball ~= self and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
+                    collisions[#collisions + 1] = ball
+                end
             end
+    
+            if #collisions > 0 then
+                local bubble = collisions[1]
+                
+                
+                local vector1 = self.Direction * self.Velocity
+                local vector2 = bubble.Direction * bubble.Velocity
+                local n = (self.Position - bubble.Position):Normalize()
+    
+                local a1 = 0 + (vector1 * n)
+                local a2 = 0 + (vector2 * n)
+                local p = (2.0 * (a1 - a2))
+    
+                local newVector1 = vector1 - (n * p)
+                local newVector2 = vector2 + (n * p)
+    
+                self.Direction = newVector1:Normalize()
+                bubble.Direction = newVector2:Normalize()
+    
+                self.Velocity = newVector1:Magnitude() * 0.5
+                bubble.Velocity = newVector2:Magnitude() * 0.5
+    
+                self.Position = bubble.Position + (n * 16)
+    
+                self.Health = math.clamp(self.Health - 1, 0, 8)
+                bubble.Health = math.clamp(bubble.Health - 1, 0, 8)
+    
+                self.FramesSinceHit = 0
+                bubble.FramesSinceHit = 0
+    
+               
+                break
+            end
+            local collided = self:BallToWallCollision()
+            if collided then break end
         end
+        
 
-        if #collisions > 0 then
-            local bubble = collisions[1]
-            print("Collision")
-            
-            local vector1 = self.Direction * self.Velocity
-            local vector2 = bubble.Direction * bubble.Velocity
-            local n = (self.Position - bubble.Position):Normalize()
-
-            local a1 = 0 + (vector1 * n)
-            local a2 = 0 + (vector2 * n)
-            local p = (2.0 * (a1 - a2))
-
-            local newVector1 = vector1 - (n * p)
-            local newVector2 = vector2 + (n * p)
-
-            self.Direction = newVector1:Normalize()
-            bubble.Direction = newVector2:Normalize()
-
-            self.Velocity = newVector1:Magnitude() * 0.5
-            bubble.Velocity = newVector2:Magnitude() * 0.5
-
-            self.Position = bubble.Position + (n * 16)
-
-            self.Health = math.clamp(self.Health - 1, 0, 8)
-            bubble.Health = math.clamp(bubble.Health - 1, 0, 8)
-
-            self.FramesSinceHit = 0
-            bubble.FramesSinceHit = 0
-        end
-
-        self.Position = self.Position + (self.Direction * self.Velocity)
-        self.Velocity = self.Velocity - self.DecelSpeed
-        self:BallToWallCollision()
     end
 
     -- updating framevalues
@@ -211,6 +231,7 @@ function Bubble:BallToWallCollision()
     self.Tilemap = self.Tilemap or self:GetParent():GetParent():GetChild("Tilemap")
     
     for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(self.Tilemap, true, false, true) do
+        
         local surfaceInfo = self.Tilemap:GetSurfaceInfo(tileID)
         local face = Prop.GetHitFace(hDist,vDist)
         -- hDist is # pixels horizontally inside the tile the bubble is (pos=wall on left, neg=wall on right)
@@ -218,18 +239,19 @@ function Bubble:BallToWallCollision()
         -- face is Chexcore's best estimate of which face you hit ("top"|"bottom"|"left"|"right")
         -- ask chex about surfaceinfo when different wall types come into play
         if face == "left" or face == "right" then
+            print("Collision wall", self.Position.X)
             self.Direction.X = -self.Direction.X
             self:SetEdge(face, self.Tilemap:GetEdge(face=="left" and "right" or "left", tileNo))
-            self.Position.X = self.Position.X + (face=="left" and -1 or 1)
+            self.Position.X = self.Position.X + (face=="left" and 1 or -1)
         elseif face == "top" or face == "bottom" then
             self.Direction.Y = -self.Direction.Y
             self:SetEdge(face, self.Tilemap:GetEdge(face=="top" and "bottom" or "top", tileNo))
-            self.Position.X = self.Position.X + (face=="top" and -1 or 1)
+            self.Position.Y = self.Position.Y + (face=="top" and 1 or -1)
         end
         self.Velocity = self.Velocity * 0.8
         self.Health = math.clamp(self.Health - 1, 0, 8)
         self.FramesSinceHit = 0
-        break
+        return true
         -- self.Position = self.Position - V{hDist, vDist}
     end
 end

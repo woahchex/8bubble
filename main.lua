@@ -4,6 +4,7 @@ require "chexcore"
 -- love.mouse.setVisible(false)
 -- some of the constructors are still somewhat manual but they'll get cleaned up !
 
+
 -- Scenes contain all the components of the game
 function love.load()
     Chexcore:AddType("game.types.gamescene")
