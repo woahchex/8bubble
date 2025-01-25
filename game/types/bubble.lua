@@ -2,9 +2,10 @@ local Bubble = {
     -- properties
     Name = "Bubble",        -- Easy identifier
     Test = true,
+    Threshold = 16,
 
     -- internal properties
-    _super = "Prop",      -- Supertype
+    _super = "Gui",      -- Supertype
     _global = true
 }
 
