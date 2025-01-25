@@ -11,6 +11,7 @@ local balls = gameLayer:Adopt(Prop.new{
 
 local cueStick
 local cueBubble = balls:Adopt(Bubble.new():Properties{
+    Name = "Cue",
     Size = V{16,16},
     AnchorPoint = V{0.5,0.5},
     Position = V{0, 0},
@@ -28,8 +29,21 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     end,
 
     OnSelectStart = function(self)
-        cueStick.Visible = not cueStick.Visible
-        cueStick.Active = not cueStick.Active
+        if self.Velocity <= 0 then
+            cueStick.Visible = not cueStick.Visible
+            cueStick.Active = not cueStick.Active
+        end
+    end,
+
+    OnSelectEnd = function(self)
+        if cueStick.Active and (gameLayer:GetMousePosition() - self.Position):Magnitude() >= 30 then
+            self.Velocity = cueStick.Power
+            self.Direction = (self.Position - cueStick.Position):Normalize()
+            self.FramesSinceHit = 0
+        end
+
+        cueStick.Visible = false
+        cueStick.Active = false
     end
 })
 
@@ -53,24 +67,14 @@ cueStick = gameLayer:Adopt(Gui.new{
 
         self.Rotation = angle
         self.Position = cueBubble.Position + Vector.FromAngle(angle + (math.pi / 2)) * (self.Power * self.Increment)
-    end,
-
-    OnSelectStart = function(self)
-        if self.Active then
-            cueBubble.Velocity = self.Power
-            cueBubble.Direction = (cueBubble.Position - cueStick.Position):Normalize()
-            self.FramesSinceHit = 0
-
-            self.Visible = false
-            self.Active = false
-        end
     end
 })
 
-local bubble = balls:Adopt(Gui.new{
+local bubble1 = balls:Adopt(Gui.new{
+    Name = "Test",
     Size = V{16,16},
     AnchorPoint = V{0.5,0.5},
-    Position = V{40, 60},
+    Position = V{40, 0},
     Direction = V{0, 0},
     Velocity = 0,
 
@@ -78,15 +82,26 @@ local bubble = balls:Adopt(Gui.new{
         local bubbles = self:GetParent():GetChildren()
 
         if self.Velocity <= 0 then
-            local magnitudes = {}
+            local collisions = {}
+            
+            for i, ball in ipairs(bubbles) do
+                if ball.Name ~= self.Name and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
+                    collisions[#collisions + 1] = ball
+                end
+            end
 
-            -- for i, ball in ipairs(bubbles) do
-            --     local vector = ball.Position - self.Position
+            if #collisions > 0 then
+                local bubble = collisions[1]
+                local vector = self.Position - bubble.Position
 
-            --     if vector:Magnitude() < Bubble.Distance then
-            --         magnitudes[#magnitudes + 1] = vector:Magnitude()
-            --     end
-            -- end
+                self.Direction = vector:Normalize()
+                self.Velocity = bubble.Velocity * 0.8
+            end
+        end
+
+        if self.Velocity > 0 then
+            self.Position = self.Position + (self.Direction * self.Velocity)
+            self.Velocity = self.Velocity - decelSpeed
         end
     end
 })
