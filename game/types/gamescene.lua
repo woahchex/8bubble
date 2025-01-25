@@ -13,7 +13,7 @@ function GameScene.new()
     local scene = Scene.new()
     local gameLayer = scene:AddLayer(Layer.new("Gameplay", 640, 360))
 
-    scene.Camera.Zoom = 2
+    -- scene.Camera.Zoom = 2
 
 
 
