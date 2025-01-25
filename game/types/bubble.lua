@@ -83,6 +83,7 @@ function Bubble:Update(dt)
 
         self.Position = self.Position + (self.Direction * self.Velocity)
         self.Velocity = self.Velocity - self.DecelSpeed
+        self:BallToWallCollision()
     end
 
     -- updating framevalues

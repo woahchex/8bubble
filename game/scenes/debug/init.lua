@@ -16,17 +16,6 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     Direction = V{0, 0},
     Velocity = 0,
 
-    Update = function(self)
-        if self.Velocity > 0 then
-            self.Position = self.Position + (self.Direction * self.Velocity)
-            self.Velocity = self.Velocity - decelSpeed
-            self:BallToWallCollision()
-        end
-        
-
-        -- updating framevalues
-        self.FramesSinceHit = self.FramesSinceHit + 1
-    end,
 
     OnSelectStart = function(self)
         if self.Velocity <= 0 then
@@ -88,6 +77,8 @@ cueStick = gameLayer:Adopt(Gui.new{
     end
 })
 
-
+gameLayer:Adopt(Tilemap.import("game.assets.tilemaps.debug","game/assets/images/tilemap.png")):Properties{
+    AnchorPoint = V{0.5,0.5}
+}
 
 return scene
