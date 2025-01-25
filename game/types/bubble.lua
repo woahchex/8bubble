@@ -213,7 +213,18 @@ function Bubble:BallToWallCollision()
         -- vDist is # pixels vertically inside the tile the bubble is (pos=wall on top, neg=wall on bottom)
         -- face is Chexcore's best estimate of which face you hit ("top"|"bottom"|"left"|"right")
         -- ask chex about surfaceinfo when different wall types come into play
-        
+        if face == "left" or face == "right" then
+            self.Direction.X = -self.Direction.X
+            self:SetEdge(face, self.Tilemap:GetEdge(face=="left" and "right" or "left", tileNo))
+            self.Position.X = self.Position.X + (face=="left" and -1 or 1)
+        elseif face == "top" or face == "bottom" then
+            self.Direction.Y = -self.Direction.Y
+            self:SetEdge(face, self.Tilemap:GetEdge(face=="top" and "bottom" or "top", tileNo))
+            self.Position.X = self.Position.X + (face=="top" and -1 or 1)
+        end
+        self.FramesSinceHit = 0
+        break
+        -- self.Position = self.Position - V{hDist, vDist}
     end
 end
 
