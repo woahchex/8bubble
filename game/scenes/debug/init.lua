@@ -22,6 +22,9 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
             self.Position = self.Position + (self.Direction * self.Velocity)
             self.Velocity = self.Velocity - decelSpeed
         end
+
+        -- updating framevalues
+        self.FramesSinceHit = self.FramesSinceHit + 1
     end,
 
     OnSelectStart = function(self)
@@ -56,6 +59,7 @@ cueStick = gameLayer:Adopt(Gui.new{
         if self.Active then
             cueBubble.Velocity = self.Power
             cueBubble.Direction = (cueBubble.Position - cueStick.Position):Normalize()
+            self.FramesSinceHit = 0
 
             self.Visible = false
             self.Active = false
@@ -76,13 +80,13 @@ local bubble = balls:Adopt(Gui.new{
         if self.Velocity <= 0 then
             local magnitudes = {}
 
-            for i, ball in ipairs(bubbles) do
-                local vector = ball.Position - self.Position
+            -- for i, ball in ipairs(bubbles) do
+            --     local vector = ball.Position - self.Position
 
-                if vector:Magnitude() < Bubble.Distance then
-                    magnitudes[#magnitudes + 1] = vector:Magnitude()
-                end
-            end
+            --     if vector:Magnitude() < Bubble.Distance then
+            --         magnitudes[#magnitudes + 1] = vector:Magnitude()
+            --     end
+            -- end
         end
     end
 })
