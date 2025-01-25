@@ -13,10 +13,7 @@ function GameScene.new()
     local scene = Scene.new()
     local gameLayer = scene:AddLayer(Layer.new("Gameplay", 640, 360))
 
-    gameLayer:Adopt(Bubble.new():Properties{
-        Size = V{16,16},
-        AnchorPoint = V{0.5,0.5}
-    })
+
 
 
 
