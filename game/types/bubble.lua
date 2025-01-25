@@ -46,9 +46,15 @@ end
 local lg, floor = love.graphics, math.floor
 function Bubble:Draw(tx, ty)
     local oldshader
-    self.DrawScale = V{1+math.sin(Chexcore._clock)/4,1}
-    self.Rotation = self.Rotation + 0.01
-
+    -- self.DrawScale = V{1+math.sin(Chexcore._clock)/4,1}
+    -- self.Rotation = self.Rotation + 0.01
+    local dv = self.Direction or V{0,0}
+    self.Rotation = V{-dv.X, dv.Y}:ToAngle()
+    
+    if self.FramesSinceHit == 1 then
+        self.DrawScale = V{1,1-self.Velocity/10}
+    end
+    self.DrawScale = self.DrawScale:Lerp(V{1,1},0.05)
 
     if self.DrawOverChildren and self:HasChildren() then
         self:DrawChildren(tx, ty)

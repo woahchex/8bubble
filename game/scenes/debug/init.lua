@@ -67,6 +67,17 @@ cueStick = gameLayer:Adopt(Gui.new{
 
         self.Rotation = angle
         self.Position = cueBubble.Position + Vector.FromAngle(angle + (math.pi / 2)) * (self.Power * self.Increment)
+    end,
+
+    OnSelectStart = function(self)
+        if self.Active then
+            cueBubble.Velocity = self.Power
+            cueBubble.Direction = (cueBubble.Position - cueStick.Position):Normalize()
+            cueBubble.FramesSinceHit = 0
+
+            self.Visible = false
+            self.Active = false
+        end
     end
 })
 
