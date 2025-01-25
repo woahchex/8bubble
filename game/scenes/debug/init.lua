@@ -114,7 +114,13 @@ local bubble1 = balls:Adopt(Gui.new{
             self.Position = self.Position + (self.Direction * self.Velocity)
             self.Velocity = self.Velocity - decelSpeed
         end
+
+        
     end
 })
+
+local tilemap = Tilemap.import("game.assets.tilemaps.debug", "game/assets/images/tilemap.png"):Nest(gameLayer):Properties{
+    AnchorPoint = V{0.5,0.5}
+}
 
 return scene

@@ -157,4 +157,18 @@ function Bubble:Draw(tx, ty)
     -- return Prop.Draw(self, tx, ty)
 end
 
+function Bubble:BallToWallCollision()
+    self.Tilemap = self.Tilemap or self:GetParent():GetParent():GetChild("Tilemap")
+    
+    for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(self.Tilemap, true, false, true) do
+        local surfaceInfo = self.Tilemap:GetSurfaceInfo(tileID)
+        local face = Prop.GetHitFace(hDist,vDist)
+        -- hDist is # pixels horizontally inside the tile the bubble is (pos=wall on left, neg=wall on right)
+        -- vDist is # pixels vertically inside the tile the bubble is (pos=wall on top, neg=wall on bottom)
+        -- face is Chexcore's best estimate of which face you hit ("top"|"bottom"|"left"|"right")
+        -- ask chex about surfaceinfo when different wall types come into play
+        
+    end
+end
+
 return Bubble
