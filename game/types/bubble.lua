@@ -6,6 +6,7 @@ local Bubble = {
     DrawScale = V{1,1},
 
     Health = 5,             -- how much health the ball has left
+    FramesSinceHit = 0,     -- how many frames since the bubble was hit
 
     TexFill = Texture.new("game/assets/images/bubble-fill.png"),
     TexGreen = Texture.new("game/assets/images/bubble-green.png"),
@@ -27,6 +28,7 @@ local Bubble = {
     _super = "Gui",      -- Supertype
     _global = true
 }
+
 
 function Bubble.new()
     local myObj = Bubble:SuperInstance()
