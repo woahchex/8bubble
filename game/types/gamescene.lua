@@ -10,10 +10,18 @@ local GameScene = {
 
 ---------------- Constructor -------------------
 function GameScene.new()
-    local myObj = Scene.new()
-    myObj:AddLayer(Layer.new("Gameplay"), 640, 360)
+    local scene = Scene.new()
+    local gameLayer = scene:AddLayer(Layer.new("Gameplay", 640, 360))
 
-    return GameScene:Connect(myObj)
+    gameLayer:Adopt(Bubble.new():Properties{
+        Size = V{16,16},
+        AnchorPoint = V{0.5,0.5}
+    })
+
+
+
+
+    return GameScene:Connect(scene)
 end
 ------------------------------------------------
 
