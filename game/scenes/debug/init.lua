@@ -12,7 +12,7 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     Name = "Cue",
     Size = V{16,16},
     AnchorPoint = V{0.5,0.5},
-    Position = V{0, 0},
+    Position = V{-20, 30},
     Direction = V{0, 0},
     Velocity = 0,
 
@@ -40,7 +40,35 @@ local bubble1 = balls:Adopt(Bubble.new():Properties{
     Name = "Test",
     Size = V{16,16},
     AnchorPoint = V{0.5,0.5},
+    Position = V{60, 30},
+})
+
+local bubble2 = balls:Adopt(Bubble.new():Properties{
+    Name = "Test1",
+    Size = V{16,16},
+    AnchorPoint = V{0.5,0.5},
+    Position = V{60, 10},
+})
+
+local bubble3 = balls:Adopt(Bubble.new():Properties{
+    Name = "Test2",
+    Size = V{16,16},
+    AnchorPoint = V{0.5,0.5},
+    Position = V{20, 30},
+})
+
+local bubble4 = balls:Adopt(Bubble.new():Properties{
+    Name = "Test3",
+    Size = V{16,16},
+    AnchorPoint = V{0.5,0.5},
     Position = V{40, 30},
+})
+
+local bubble5 = balls:Adopt(Bubble.new():Properties{
+    Name = "Test4",
+    Size = V{16,16},
+    AnchorPoint = V{0.5,0.5},
+    Position = V{0, 30},
 })
 
 cueStick = gameLayer:Adopt(Gui.new{

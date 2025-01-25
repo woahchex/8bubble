@@ -52,7 +52,7 @@ function Bubble:Update(dt)
         local collisions = {}
             
         for i, ball in ipairs(bubbles) do
-            if ball.Name ~= self.Name and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
+            if ball ~= self and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
                 collisions[#collisions + 1] = ball
             end
         end
@@ -75,10 +75,13 @@ function Bubble:Update(dt)
             self.Direction = newVector1:Normalize()
             bubble.Direction = newVector2:Normalize()
 
-            self.Velocity = newVector1:Magnitude() * 0.8
-            bubble.Velocity = newVector2:Magnitude() * 0.8
+            self.Velocity = newVector1:Magnitude() * 0.5
+            bubble.Velocity = newVector2:Magnitude() * 0.5
 
             self.Position = bubble.Position + (n * 16)
+
+            self.Health = math.clamp(self.Health - 1, 0, 8)
+            bubble.Health = math.clamp(bubble.Health - 1, 0, 8)
 
             self.FramesSinceHit = 0
             bubble.FramesSinceHit = 0
