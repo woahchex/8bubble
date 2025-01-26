@@ -291,8 +291,14 @@ function Bubble:Pop()
     if self.Name == "Cue Ball" then
         self:GetParent():EndLevel()
     end
-
     self:Emancipate()
+    
+    local nonCueBubbles = self:GetParent():GetChildren()
+    if #nonCueBubbles == 1 and nonCueBubbles[1].Name == "Cue Ball" then
+        self:GetParent():EndLevel()
+    end
+
+    
 end
 
 local lg, floor = love.graphics, math.floor
