@@ -16,7 +16,6 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     Direction = V{0, 0},
     Velocity = 0,
 
-
     OnSelectStart = function(self)
         if self.Velocity <= 0 then
             cueStick.Visible = not cueStick.Visible

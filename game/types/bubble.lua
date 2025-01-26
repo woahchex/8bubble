@@ -52,7 +52,30 @@ end
 
 
 function Bubble:Update(dt)
-    if self.Velocity > 0 then
+    local bubbles = self:GetParent():GetChildren()
+    
+    if self.Health == 0 then
+        for i, ball in ipairs(bubbles) do
+            local vector = ball.Position - self.Position
+            
+            if vector:Magnitude() < 32 then
+                local vector1 = vector:Normalize() * (32 / vector:Magnitude())
+                local vector2 = ball.Direction * ball.Velocity
+                local n = vector:Normalize()
+    
+                local a1 = 0 + (vector1 * n)
+                local a2 = 0 + (vector2 * n)
+                local p = (2.0 * (a1 - a2))
+
+                local newVector = vector2 + (n * p)
+                ball.Direction = newVector:Normalize()
+                ball.Velocity = newVector:Magnitude()
+            end
+        end
+
+        self:Emancipate()
+        
+    elseif self.Velocity > 0 then
         local subdivisions = 1
         if math.abs(self.Velocity) > MAX_X_DIST then
             subdivisions = math.floor(1+math.abs(self.Velocity)/MAX_X_DIST)
@@ -64,7 +87,7 @@ function Bubble:Update(dt)
         local posDelta = (self.Direction * self.Velocity)
         
         self.Velocity = self.Velocity - self.DecelSpeed
-        local bubbles = self:GetParent():GetChildren()
+        
         local collisions = {}
         for _ = 1, subdivisions do
             self.Position = self.Position + posDelta/subdivisions
@@ -76,7 +99,6 @@ function Bubble:Update(dt)
     
             if #collisions > 0 then
                 local bubble = collisions[1]
-                
                 
                 local vector1 = self.Direction * self.Velocity
                 local vector2 = bubble.Direction * bubble.Velocity
