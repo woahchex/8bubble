@@ -21,6 +21,7 @@ local Bubble = {
         [6] = Texture.new("game/assets/images/6.png"),
         [7] = Texture.new("game/assets/images/7.png"),
         [8] = Texture.new("game/assets/images/8.png"),
+        [9] = Texture.new("game/assets/images/9.png"),
     },
     
     
@@ -292,7 +293,7 @@ function Bubble:Pop()
         self:GetParent():EndLevel()
     end
     self:Emancipate()
-    
+
     local nonCueBubbles = self:GetParent():GetChildren()
     if #nonCueBubbles == 1 and nonCueBubbles[1].Name == "Cue Ball" then
         self:GetParent():EndLevel()

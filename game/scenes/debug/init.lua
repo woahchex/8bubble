@@ -404,7 +404,7 @@ local scoreText = scoreLayer:Adopt(Text.new{
     end,
 
     Display = function(self)
-        if (scene.Score > _G.highScores[levelNum]) then
+        if (scene.Score > (_G.highScores[levelNum] or 0)) then
             _G.highScores[levelNum] = scene.Score
         end
 

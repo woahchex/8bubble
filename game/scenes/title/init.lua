@@ -248,6 +248,9 @@ levelSelect = logoLayer:Adopt(Gui.new{
 _G.LEVELS = {
     [1] = "level1",
     [2] = "level2",
+    [3] = "level3",
+    [4] = "level4",
+    [5] = "level5",
 }
 
 local function reload(module_name)

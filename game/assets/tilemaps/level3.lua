@@ -10,7 +10,7 @@ return {
   tilewidth = 16,
   tileheight = 16,
   nextlayerid = 4,
-  nextobjectid = 8,
+  nextobjectid = 11,
   properties = {},
   tilesets = {
     {
@@ -145,8 +145,8 @@ return {
           shape = "rectangle",
           x = 400,
           y = 208,
-          width = 16,
-          height = 16,
+          width = 16.6667,
+          height = 16.6667,
           rotation = 0,
           gid = 2,
           visible = true,
@@ -160,7 +160,7 @@ return {
           type = "",
           shape = "rectangle",
           x = 400,
-          y = 288,
+          y = 256,
           width = 16,
           height = 16,
           rotation = 0,
@@ -189,7 +189,7 @@ return {
           name = "",
           type = "",
           shape = "rectangle",
-          x = 320,
+          x = 352,
           y = 288,
           width = 16,
           height = 16,
@@ -205,8 +205,56 @@ return {
           name = "",
           type = "",
           shape = "rectangle",
-          x = 480,
-          y = 288,
+          x = 496,
+          y = 336,
+          width = 16,
+          height = 16,
+          rotation = 0,
+          gid = 2,
+          visible = true,
+          properties = {
+            ["Health"] = 2
+          }
+        },
+        {
+          id = 8,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 451.667,
+          y = 287.667,
+          width = 16,
+          height = 16,
+          rotation = 0,
+          gid = 2,
+          visible = true,
+          properties = {
+            ["Health"] = 2
+          }
+        },
+        {
+          id = 9,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 304,
+          y = 336,
+          width = 16,
+          height = 16,
+          rotation = 0,
+          gid = 2,
+          visible = true,
+          properties = {
+            ["Health"] = 2
+          }
+        },
+        {
+          id = 10,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 400,
+          y = 160,
           width = 16,
           height = 16,
           rotation = 0,
