@@ -7,7 +7,20 @@ local scene = GameScene.new()
 local gameLayer = scene:GetLayer("Gameplay")
 
 local tilemapLayer = scene:GetLayer("TilemapLayer")
+Particles.new{
+    Name = "BubbleParticle",
+    AnchorPoint = V{0.5, 0.5},
+    ParticleAnchorPoint = V{0.5, 1},
+    Visible = true,
+    Texture = Texture.new("chexcore/assets/images/empty.png"),
+    RelativePosition = false,
+    Color = V{0,0,0,0},
+    Size = V{1, 1},
 
+    ParticleSize = V{12, 12},
+    ParticleColor = V{1,1,1,1},
+    ParticleTexture = Texture.new("game/scenes/title/sphere.png"),
+}:Nest(gameLayer)
 local balls = gameLayer:Adopt(Prop.new{
     Name = "Balls",
     Visible = false
@@ -37,6 +50,8 @@ Particles.new{
     ParticleColor = V{1,1,1,1},
     ParticleTexture = Texture.new("game/assets/images/plusone.png"),
 }:Nest(gameLayer)
+
+
 
 local cueStick
 local cueBubble = balls:Adopt(Bubble.new():Properties{

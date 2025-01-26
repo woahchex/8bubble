@@ -124,10 +124,30 @@ end
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
     
+    
+
     if self.Health == 0 then
         self:Pop()
         
     elseif self.Velocity > 0 then
+
+        if self.Velocity > 1.5 or
+            self.Velocity > 1 and math.random(3)==2 or
+            self.Velocity > 0.5 and math.random(8)==4 then
+            self:GetLayer():GetChild("BubbleParticle"):Emit{
+                Position = self.Position+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
+                Size = V{1,1} * math.random(1,3),
+                SizeVelocity = V{-1,-1},
+                -- SizeAcceleration = V{-100,-100},
+                Velocity = V{0,0},
+                Acceleration = V{0,0},
+                -- ColorVelocity = V{0,0,0,-1},
+                RotVelocity = 1,
+                Rotation = math.random(-1,1)/8,
+                AnchorPoint = V{0.5,0.5},
+                Duration = 0.6
+            }
+        end
         self:BallToInteractableCollision()
         local subdivisions = 1
         if math.abs(self.Velocity) > MAX_X_DIST then
@@ -206,6 +226,35 @@ function Bubble:Pop()
     self:PlaySFX("Uke",1,0)
     self:PlaySFX("Explode", 3, 4)
     self:GetLayer():GetParent().ScreenShake = self:GetLayer():GetParent().ScreenShake + 4
+    
+    for i = 0, 330, 30 do
+        self:GetLayer():GetChild("BubbleParticle"):Emit{
+            Position = self.Position,--+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
+            Size = V{1,1} * math.random(2,4),
+            SizeVelocity = V{-2,-2},
+            -- SizeAcceleration = V{-100,-100},
+            Velocity = Vector.FromAngle(math.rad(i))*10,
+            Acceleration = V{0,0},
+            -- ColorVelocity = V{0,0,0,-1},
+            RotVelocity = 1,
+            Rotation = math.random(-1,1)/8,
+            AnchorPoint = V{0.5,0.5},
+            Duration = 0.6
+        }
+        self:GetLayer():GetChild("BubbleParticle"):Emit{
+            Position = self.Position,--+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
+            Size = V{1,1} * math.random(2,4),
+            SizeVelocity = V{-2,-2},
+            -- SizeAcceleration = V{-100,-100},
+            Velocity = Vector.FromAngle(math.rad(i))*30,
+            Acceleration = V{0,0},
+            -- ColorVelocity = V{0,0,0,-1},
+            RotVelocity = 1,
+            Rotation = math.random(-1,1)/8,
+            AnchorPoint = V{0.5,0.5},
+            Duration = 2
+        }
+    end
     for i, ball in ipairs(bubbles) do
         local vector = ball.Position - self.Position
         
@@ -416,7 +465,7 @@ function Bubble:BallToInteractableCollision()
 
             
             self:GetLayer():GetChild("PlusOne"):Emit{
-                Position = V{0,0},
+                Position = self.Position + V{8,-8},
                 Size = V{12,12},
                 SizeVelocity = V{20,20},
                 SizeAcceleration = V{-100,-100},
@@ -428,6 +477,8 @@ function Bubble:BallToInteractableCollision()
                 AnchorPoint = V{0.5,0.5},
                 Duration = 0.5
             }
+            
+
         end
     end
 end
