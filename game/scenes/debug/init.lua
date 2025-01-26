@@ -2,11 +2,10 @@
 local scene = GameScene.new()
 
 -- background
-
-
 local gameLayer = scene:GetLayer("Gameplay")
-
 local tilemapLayer = scene:GetLayer("TilemapLayer")
+local scoreLayer = scene:GetLayer("Score")
+
 Particles.new{
     Name = "BubbleParticle",
     AnchorPoint = V{0.5, 0.5},
@@ -22,14 +21,14 @@ Particles.new{
     ParticleTexture = Texture.new("game/scenes/title/sphere.png"),
 }:Nest(gameLayer)
 
-local score = gameLayer:Adopt(Gui.new{
-    
-})
+local scoreboard
+local cueStick
 
 local balls = gameLayer:Adopt(Prop.new{
     Name = "Balls",
     Visible = false,
     BallsMoving = 0,
+    CheckEnd = false,
     LevelEnd = false,
 
     Update = function(self)
@@ -44,19 +43,17 @@ local balls = gameLayer:Adopt(Prop.new{
 
         self.BallsMoving = numBalls
 
-        if self.LevelEnd and self.BallsMoving == 0 then
-            self:DisplayScores()
+        if self.CheckEnd and self.BallsMoving == 0 then
+            self.CheckEnd = false
+            self.LevelEnd = true
+
+            cueStick:Disable()
+            scoreboard:Display()
         end
     end,
 
     EndLevel = function(self)
-        self.LevelEnd = true
-    end,
-
-    DisplayScores = function(self)
-        self.LevelEnd = false
-
-        print("Level Done")
+        self.CheckEnd = true
     end
 })
 
@@ -85,7 +82,6 @@ Particles.new{
     ParticleTexture = Texture.new("game/assets/images/plusone.png"),
 }:Nest(gameLayer)
 
-local cueStick
 local cueBubble = balls:Adopt(Bubble.new():Properties{
     Name = "Cue Ball",
     Size = V{16,16},
@@ -156,7 +152,9 @@ local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
     end,
 
     OnHoverStart = function(self)
-        cueStick:Enable()
+        if not balls.LevelEnd then
+            cueStick:Enable()
+        end
     end
 })
 
@@ -236,7 +234,95 @@ local refill1 = interactables:Adopt(Refill.new():Properties{
 
 })
 
+-- level end screen
+scoreboard = scoreLayer:Adopt(Gui.new{
+    Name = "Scoreboard",
+    Size = V{280, 150},
+    Position = V{0, 350},
+    AnchorPoint = V{0.5, 0.5},
+    Texture = Texture.new("game/assets/images/scoreboard.png"),
+    Idle = false,
+    Visible = true,
+    Active = false,
+    
+    Update = function(self)
+        if self.Idle then
+            self.Position = self.Position:Lerp(V{0, 0 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: math.sin(Chexcore._clock) * 2
+        else
+            self.Position = self.Position:Lerp(V{0, 350}, 0.1)
 
+            if (V{0, 350} - self.Position):Magnitude() < 0.1 then
+                self.Visible = false
+                self.Active = false
+            end
+        end
+    end,
+
+    Display = function(self)
+        self.Idle = true
+
+        self.Visible = true
+        self.Active = true
+
+        local elements = self:GetParent():GetChildren()
+        for i, element in ipairs(elements) do
+            if element ~= self then
+                element:Display()
+            end
+        end
+    end,
+
+    Undisplay = function(self)
+        self.Idle = false
+
+        local elements = self:GetParent():GetChildren()
+        for i, element in ipairs(elements) do
+            if element ~= self then
+                element:Undisplay()
+            end
+        end
+    end
+        
+})
+
+local button = scoreLayer:Adopt(Gui.new{
+    Name = "Button",
+    Size = V{24, 24},
+    Position = V{0, 400},
+    AnchorPoint = V{0.5, 0.5},
+    Texture = Texture.new("game/scenes/title/play-button.png"),
+    Idle = false,
+    Visible = false,
+    Active = false,
+    
+    Update = function(self)
+        if self.Idle then
+            self.Position = self.Position:Lerp(V{0, 50 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: 
+        else
+            self.Position = self.Position:Lerp(V{0, 400}, 0.1)
+
+            if (V{0, 400} - self.Position):Magnitude() < 0.1 then
+                self.Visible = false
+                self.Active = false
+            end
+        end
+    end,
+
+    Display = function(self)
+        self.Idle = true
+
+        self.Visible = true
+        self.Active = true
+    end,
+
+    Undisplay = function(self)
+        self.Idle = false
+    end,
+
+    OnSelectStart = function(self)
+        scoreboard:Undisplay()
+    end
+})
 
 
 
