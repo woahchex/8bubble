@@ -15,6 +15,7 @@ function love.load()
     local scene = require("game.scenes.debug.init")
     Chexcore.MountScene(scene)
 
+    _G.highScores = _G.highScores or {[1] = 0, [2] = 0}
 
     -- print(player:ToString(true))
     -- You can unmount (or deactivate) a scene by using Chexcore.UnmountScene(scene)
