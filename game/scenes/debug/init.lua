@@ -536,16 +536,11 @@ shape4 = transition:Adopt(Gui.new{
     RotationSpeed = 2,
     DrawInForeground = true,
     State = "Shrink",
-    Function = function() end,
 
     Update = function(self)
         if self.State ~= "Idle" then
             self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
             self.Rotation = Chexcore._clock * self.RotationSpeed
-
-            if self.State == "Grow" and (self.Size - self.GoalSize):Magnitude() < 1 then
-                self.Function()
-            end
 
             if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
                 self:Stop()
