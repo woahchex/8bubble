@@ -282,8 +282,9 @@ local scoreText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
 
 local dirt1 = dirt:Adopt(Dirt.new():Properties{
     Position = V{-16 * 13, 0},
-    Size = V{16, 16 * 4},
-    Color = Vector.Hex"59a4ff",
+    Size = V{16,48},
+    Color = V{1,1,1},--Vector.Hex"59a4ff",
+    Texture = Texture.new("game/scenes/title/dirt-right1.png"),
     DrawInForeground = true
 })
 

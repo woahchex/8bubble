@@ -12,7 +12,7 @@ function love.load()
     Chexcore:AddType("game.types.dirt")
     Chexcore:AddType("game.types.refill")
 
-    local scene = require("game.scenes.debug.init")
+    local scene = require("game.scenes.title.init")
     Chexcore.MountScene(scene)
 
 

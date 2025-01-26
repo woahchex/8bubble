@@ -461,7 +461,7 @@ function Bubble:BallToDirtCollision()
     print("Checking Dirt")
     
     for stain, hDist, vDist, tileID in self:CollisionPass(dirt) do
-        print(stain)
+        self:GetLayer():GetParent().Score = self:GetLayer():GetParent().Score + 100 * (self.Health+1)
         stain:Emancipate()
     end
 end

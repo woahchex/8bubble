@@ -1,6 +1,11 @@
 local RESOLUTION = V{640, 360}
 local scene = Scene.new()
-
+scene.CameraGoalPos = V{0,0}
+local pillarOffsetL = V{-16,32}
+local pillarOffsetR = V{16,32}
+local pillar2
+local pillarGoalPos = V{RESOLUTION.X/2, RESOLUTION.Y/2} + pillarOffsetR
+local levelSelect
 
 local bgLayer = scene:AddLayer(Layer.new("BG", RESOLUTION.X, RESOLUTION.Y))
 
@@ -14,6 +19,8 @@ local spinny2 = bgLayer:Adopt(Prop.new{
     Color = Vector.Hex"5f82f8",
     Update = function (self)
         self.Rotation = Chexcore._clock/8
+        scene.Camera.Position = scene.Camera.Position:Lerp(scene.CameraGoalPos, 0.2)
+        pillar2.Position = pillar2.Position:Lerp(pillarGoalPos, 0.2)
     end
 })
 
@@ -93,6 +100,9 @@ local playButton = logoLayer:Adopt(Gui.new{
         if self.Hovered then
             playBubble.Size2 = V{120,120}
             self.GoalSize = V{70,70}
+            scene.CameraGoalPos = V{100,-30}
+            pillarGoalPos = V{RESOLUTION.X/2, RESOLUTION.Y/2} + pillarOffsetR + V{100,0}
+            levelSelect.GoalPos = V{120,-130}
         end
     end
 })
@@ -104,6 +114,14 @@ local water1 = logoLayer:Adopt(Prop.new{
     Color = V{1,1,1,0.9},
     Update = function (self)
         self.Position = V{0,100} + (V{Chexcore._clock/6,0}%1)*256
+    end
+})
+local water1 = logoLayer:Adopt(Prop.new{
+    Texture = Texture.new("game/scenes/title/water.png"),
+    Size = V{256,256},
+    Color = V{1,1,1,0.9},
+    Update = function (self)
+        self.Position = V{256,100} + (V{Chexcore._clock/6,0}%1)*256
     end
 })
 local water2 = logoLayer:Adopt(Prop.new{
@@ -186,15 +204,14 @@ playBubble = logoLayer:Adopt(Prop.new{
 
 
 
-local pillarOffsetL = V{-16,32}
-local pillarOffsetR = V{16,32}
+
 local pillar1 = logoLayer:Adopt(Prop.new{
     Position = V{-RESOLUTION.X/2, RESOLUTION.Y/2} + pillarOffsetL,
     AnchorPoint = V{0,1},
     Size = V{193,161},
     Texture = Texture.new("game/scenes/title/left-pillar.png")
 })
-local pillar2 = logoLayer:Adopt(Prop.new{
+pillar2 = logoLayer:Adopt(Prop.new{
     Position = V{RESOLUTION.X/2, RESOLUTION.Y/2} + pillarOffsetR,
     AnchorPoint = V{1,1},
     Size = V{193,161},
@@ -217,4 +234,120 @@ logoLayer:Adopt(Gui.new{
         self.Size = self.Size:Lerp(self.GoalSize, 0.2)
     end
 })
+
+levelSelect = logoLayer:Adopt(Gui.new{
+    Texture = Texture.new("game/assets/images/scoreboard.png"),
+    Size = V{290,150},
+    Position = V{200,-130},
+    GoalPos = V{350,-130},
+    Update = function (self)
+        self.Position = self.Position:Lerp(self.GoalPos, 0.1)
+    end
+})
+
+local LEVELS = {
+    [1] = "debug",
+    [2] = "debug"
+}
+
+local function reload(module_name)
+    -- Remove the module from the package.loaded table
+    package.loaded[module_name] = nil
+    -- Require the module again, forcing a fresh load
+    return require(module_name)
+end
+
+function scene:Load(name)
+    Chexcore.UnmountScene(self)
+    local scene = reload("game.scenes."..name..".init")
+    
+    Chexcore.MountScene(scene)
+end
+
+local shape4 = logoLayer:Adopt(Gui.new{
+    Name = "Shape",
+    
+    Texture = Texture.new("game/scenes/title/septagon.png"),
+    Color = Vector.Hex"000000",
+    Size = V{1, 1} * 0,
+    GoalSize = V{0, 0},
+    LerpSpeed = 0.08,
+    Position = V{0, 0},
+    AnchorPoint = V{0.5, 0.5},
+    RotationSpeed = 2,
+    DrawInForeground = true,
+    State = "Shrink",
+
+    Update = function(self)
+        self.Position = self:GetLayer():GetParent().Camera.Position
+        if self.State ~= "Idle" then
+            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
+            self.Rotation = Chexcore._clock * self.RotationSpeed
+
+            if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
+                self:Stop()
+            end
+        end
+    end,
+
+    Start = function(self, goalSize, rotSpeed)
+        self.State = "Grow"
+
+        self.GoalSize = V{1, 1} * 860
+        self.LerpSpeed = 0.1
+        self.Function = toCall
+    end,
+
+    Stop = function(self)
+        self.State = "Idle"
+    end
+})
+
+for i, level in ipairs(LEVELS) do
+    levelSelect:Adopt(Gui.new{
+        Spot = V{0.1 + (i-1)*0.2, 0.3},
+        Name = tostring(i),
+        Size = V{32,32},
+        AnchorPoint = V{0.5,0.5},
+        GoalSize = V{32,32},
+        Hover = false,
+        Texture = Texture.new("game/assets/images/level-select.png"),
+        OnSelectEnd = function (self)
+            self.Size = V{25,25}
+            self.GoalSize = self.Hover and V{40,40} or V{32,32}
+            shape4:Start()
+            Timer.Schedule(0.5,function ()
+                scene:Load(level)
+            end)
+        end,
+        OnSelectStart = function (self)
+            self.GoalSize = V{32,32}
+        end,
+        OnHoverStart = function (self)
+            self.GoalSize = V{40,40}
+            self.Hover = true
+        end,
+
+        OnHoverEnd = function (self)
+            self.GoalSize = V{32,32}
+            self.Hover = false
+        end,
+
+        Update = function (self)
+            self.Position = self:GetParent():GetPoint(self.Spot())
+            self:GetChild("Text").Position = self.Position
+            self.Size = self.Size:Lerp(self.GoalSize, 0.2)
+        end
+    }):Adopt(Text.new{
+        Name = "Text",
+        Text = tostring(i),
+        FontSize = 14,
+        TextColor = V{0,0,0},
+        Size = V{1000,100},
+        Position = V{-185,-107},
+        Font = Font.new("chexcore/assets/fonts/futura.ttf", 14, "mono"),
+    
+    })
+end
+
 return scene
