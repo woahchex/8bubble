@@ -22,10 +22,15 @@ Particles.new{
     ParticleTexture = Texture.new("game/scenes/title/sphere.png"),
 }:Nest(gameLayer)
 
+local score = gameLayer:Adopt(Gui.new{
+    
+})
+
 local balls = gameLayer:Adopt(Prop.new{
     Name = "Balls",
     Visible = false,
     BallsMoving = 0,
+    LevelEnd = false,
 
     Update = function(self)
         local bubbles = self:GetChildren()
@@ -38,6 +43,20 @@ local balls = gameLayer:Adopt(Prop.new{
         end
 
         self.BallsMoving = numBalls
+
+        if self.LevelEnd and self.BallsMoving == 0 then
+            self:DisplayScores()
+        end
+    end,
+
+    EndLevel = function(self)
+        self.LevelEnd = true
+    end,
+
+    DisplayScores = function(self)
+        self.LevelEnd = false
+
+        print("Level Done")
     end
 })
 
@@ -82,7 +101,7 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
         self.Velocity = cueStick.Power
         self.Direction = (self.Position - cueStick.Position):Normalize()
         self.FramesSinceHit = 0
-    end
+    end,
 })
 
 cueStick = gameLayer:Adopt(Gui.new{
@@ -109,6 +128,7 @@ cueStick = gameLayer:Adopt(Gui.new{
 
         if self.Enabled and balls.BallsMoving == 0 then
             self.Visible = true
+            self.Enabled = false
         end
     end,
 
@@ -126,7 +146,7 @@ cueStick = gameLayer:Adopt(Gui.new{
 
 local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
     Name = "Enter Radius",
-    Size = V{1, 1} * cueStick.Increment * 2,
+    Size = V{1, 1} * ((cueStick.Increment * 2) + 40),
     AnchorPoint = V{0.5, 0.5},
     Position = cueBubble.Position,
     Visible = false,

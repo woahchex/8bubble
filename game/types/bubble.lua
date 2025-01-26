@@ -235,6 +235,7 @@ function Bubble:Pop()
             AnchorPoint = V{0.5,0.5},
             Duration = 0.6
         }
+
         self:GetLayer():GetChild("BubbleParticle"):Emit{
             Position = self.Position,--+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
             Size = V{1,1} * math.random(2,4),
@@ -285,6 +286,10 @@ function Bubble:Pop()
     Timer.Schedule(0.3, function()
         pop:Emancipate()
     end)
+
+    if self.Name == "Cue Ball" then
+        self:GetParent():EndLevel()
+    end
 
     self:Emancipate()
 end
