@@ -192,15 +192,18 @@ function Bubble:Draw(tx, ty)
     local sx = CANVAS_SIZE.X * (self.DrawScale[1]-1)
     local sy = CANVAS_SIZE.Y * (self.DrawScale[2]-1)
 
-    self.Numbers[self.Health]:DrawToScreen(
-        floor(self.Position[1] - tx),
-        floor(self.Position[2] - ty) ,
-        0,
-        self.Size[1] + sx,
-        self.Size[2] + sy,
-        self.AnchorPoint[1],
-        self.AnchorPoint[2]
-    )
+    if self.Numbers[self.Health] then
+        self.Numbers[self.Health]:DrawToScreen(
+            floor(self.Position[1] - tx),
+            floor(self.Position[2] - ty) ,
+            0,
+            self.Size[1] + sx,
+            self.Size[2] + sy,
+            self.AnchorPoint[1],
+            self.AnchorPoint[2]
+        )
+    end
+
 
     self.Texture:Activate()
     lg.clear()
