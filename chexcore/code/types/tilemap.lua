@@ -71,6 +71,36 @@ local Tilemap = {
             }
         },
 
+        SpikeLeft = {
+            Left = {
+                CollisionInset = 12,
+                Spikes = true
+            }
+        },
+
+        SpikeRight = {
+            Right = {
+                CollisionInset = 12,
+                Spikes = true
+            }
+        },
+
+        
+        SpikeTop = {
+            Top = {
+                CollisionInset = 12,
+                Spikes = true
+            }
+        },
+
+        SpikeBottom = {
+            Bottom = {
+                CollisionInset = 12,
+                Spikes = true
+            }
+        },
+
+
         MiniTile = {
             Top = {CollisionInset = 4},
             Bottom = {CollisionInset = 4},
@@ -92,6 +122,12 @@ local Tilemap = {
 
             [1] = "Slab"
         ]]
+
+        [86] = "SpikeTop",
+        [105] = "SpikeLeft",
+        [107] = "SpikeRight",
+        [126] = "SpikeBottom",
+
         [386] = "OnePixelHorizontalInset",
         [385] = "OnePixelVerticalInset",
 
