@@ -10,7 +10,7 @@ return {
   tilewidth = 16,
   tileheight = 16,
   nextlayerid = 4,
-  nextobjectid = 7,
+  nextobjectid = 8,
   properties = {},
   tilesets = {
     {
@@ -143,8 +143,8 @@ return {
           name = "",
           type = "",
           shape = "rectangle",
-          x = 416,
-          y = 256,
+          x = 336,
+          y = 176,
           width = 16,
           height = 16,
           rotation = 0,
@@ -189,7 +189,7 @@ return {
           name = "",
           type = "",
           shape = "rectangle",
-          x = 480,
+          x = 256,
           y = 256,
           width = 16,
           height = 16,
@@ -197,7 +197,23 @@ return {
           gid = 2,
           visible = true,
           properties = {
-            ["Health"] = 3
+            ["Health"] = 2
+          }
+        },
+        {
+          id = 7,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 416,
+          y = 256,
+          width = 16,
+          height = 16,
+          rotation = 0,
+          gid = 2,
+          visible = true,
+          properties = {
+            ["Health"] = 2
           }
         }
       }

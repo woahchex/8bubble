@@ -245,9 +245,9 @@ levelSelect = logoLayer:Adopt(Gui.new{
     end
 })
 
-local LEVELS = {
-    [1] = "debug",
-    [2] = "debug"
+_G.LEVELS = {
+    [1] = "level1",
+    [2] = "level2",
 }
 
 local function reload(module_name)
@@ -316,8 +316,10 @@ for i, level in ipairs(LEVELS) do
             self.Size = V{25,25}
             self.GoalSize = self.Hover and V{40,40} or V{32,32}
             shape4:Start()
+            _G.tilemap = "game.assets.tilemaps."..level
+            _G.CurLevel = i
             Timer.Schedule(0.5,function ()
-                scene:Load(level)
+                scene:Load("debug")
             end)
         end,
         OnSelectStart = function (self)

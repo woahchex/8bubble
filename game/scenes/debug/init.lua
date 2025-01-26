@@ -1,5 +1,5 @@
 
-local levelNum = 1
+local levelNum = _G.CurLevel
 
 -- local RESOLUTION = V{160, 90}
 local scene = GameScene.new()
@@ -117,7 +117,7 @@ cueStick = gameLayer:Adopt(Gui.new{
     Visible = false,
     Active = false,
     Enabled = false,
-    Division = (math.pi / 12),
+    Division = (math.pi / 36),
     Power = 0,
     Increment = 30,
     
@@ -259,7 +259,7 @@ local cueBallExitRadius = gameLayer:Adopt(Gui.new{
 --     Position = V{0, 30},
 -- })
 
-tilemapLayer:Adopt(Tilemap.import("game.assets.tilemaps.debug","game/assets/images/tilemap.png")):Properties{
+tilemapLayer:Adopt(Tilemap.import(_G.tilemap,"game/assets/images/tilemap.png")):Properties{
     AnchorPoint = V{0.5,0.5}
 }
 
@@ -465,6 +465,9 @@ local playButton = scoreLayer:Adopt(Gui.new{
 
         Timer.Schedule(2.5, function()
             -- Insert code to load new level
+            _G.CurLevel = _G.CurLevel+1
+            _G.tilemap = "game.assets.tilemaps.".._G.LEVELS[_G.CurLevel]
+            self:GetLayer():GetParent():Reload()
         end)
     end
 })
