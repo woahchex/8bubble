@@ -101,8 +101,8 @@ function Bubble:Update(dt)
     
                 self.Position = bubble.Position + (n * 16)
     
-                self.Health = math.clamp(self.Health - 1, 0, 8)
-                bubble.Health = math.clamp(bubble.Health - 1, 0, 8)
+                self.Health = self.Health - 1
+                bubble.Health = bubble.Health - 1
     
                 self.FramesSinceHit = 0
                 bubble.FramesSinceHit = 0
@@ -306,7 +306,7 @@ function Bubble:BallToWallCollision()
             self.Position.Y = self.Position.Y + (face=="top" and 1 or -1)
         end
         self.Velocity = self.Velocity * 0.8
-        self.Health = math.clamp(self.Health - 1, 0, 8)
+        self.Health = self.Health - 1
         self.FramesSinceHit = 0
         return true
         -- self.Position = self.Position - V{hDist, vDist}
