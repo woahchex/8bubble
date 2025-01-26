@@ -23,6 +23,7 @@ local Bubble = {
         [8] = Texture.new("game/assets/images/8.png"),
     },
     
+    
     Size = V{16, 16},
     Position = V{0, 0},
     Rotation = 0,
@@ -39,17 +40,86 @@ local Bubble = {
 
 function Bubble.new()
     local myObj = Bubble:SuperInstance()
-    myObj.Shader = Shader.new("game/assets/shaders/1px-white-outline.glsl"):Send("step", V{1,1}/CANVAS_SIZE)
+    myObj.Shader = Shader.new("game/assets/shaders/1px-white-outline.glsl"):Send("step", V{1,1}/CANVAS_SIZE*2)
     myObj.Texture = Canvas.new(CANVAS_SIZE())
     myObj.Tex2 = Canvas.new(CANVAS_SIZE())
     myObj.DrawScale = V{1,1}
+
+    myObj.SFX = {
+        Clink = {
+            Sound.new("game/assets/sounds/ball-clink1.wav", "static"):Set("Volume", 1.0),
+            Sound.new("game/assets/sounds/ball-clink2.wav", "static"):Set("Volume", 1.0),
+            Sound.new("game/assets/sounds/ball-clink3.wav", "static"):Set("Volume", 1.0)
+        },
+        LightClink = {
+            Sound.new("game/assets/sounds/ball-clink-light1.wav", "static"):Set("Volume", 1.0),
+            Sound.new("game/assets/sounds/ball-clink-light2.wav", "static"):Set("Volume", 1.0),
+            Sound.new("game/assets/sounds/ball-clink-light3.wav", "static"):Set("Volume", 1.0)
+        },
+        Sink = {
+            Sound.new("game/assets/sounds/ball-sink.wav", "static"):Set("Volume", 1.0),
+        },
+        Explode = {
+            Sound.new("game/assets/sounds/ball-explode.wav", "static"):Set("Volume", 0.15),
+        },
+        Refill = {
+            Sound.new("game/assets/sounds/health-refill.wav", "static"):Set("Volume", 0.5),
+        },
+        Pop = {
+            Sound.new("game/assets/sounds/bubble-pop.wav", "static"):Set("Volume", 0.5),
+        },
+        Serve = {
+            Sound.new("game/assets/sounds/ball-serve.wav", "static"):Set("Volume", 1.0),
+            Sound.new("game/assets/sounds/ball-serve2.wav", "static"):Set("Volume", 1.0),
+        },
+        Bump = {
+            Sound.new("game/assets/sounds/ball-bump.wav", "static"):Set("Volume", 0.15),
+        },
+        Uke = {
+            Sound.new("game/assets/sounds/uke-01.wav", "static"):Set("Volume", 0.3),
+            Sound.new("game/assets/sounds/uke-02.wav", "static"):Set("Volume", 0.3),
+            Sound.new("game/assets/sounds/uke-03.wav", "static"):Set("Volume", 0.3),
+            Sound.new("game/assets/sounds/uke-04.wav", "static"):Set("Volume", 0.3),
+            Sound.new("game/assets/sounds/uke-05.wav", "static"):Set("Volume", 0.3),
+            Sound.new("game/assets/sounds/uke-06.wav", "static"):Set("Volume", 0.3),
+            Sound.new("game/assets/sounds/uke-07.wav", "static"):Set("Volume", 0.3),
+
+        }
+    }
+
     return Bubble:Connect(myObj)
 end
     -- update position before velocity, so that there is at least 1 frame of whatever Velocity is set by prev frame
     local MAX_Y_DIST = 1
     local MAX_X_DIST = 1
     
+function Bubble:PlaySFX(name, pitch, variance, volume)
+    pitch = pitch or 1
+    variance = variance or 1
+    local no = math.random(1, #self.SFX[name])
+    self.LastSFX_ID = self.LastSFX_ID or {}
+    
+    if no == self.LastSFX_ID[name] then
+        no = no+1
+        if no > #self.SFX[name] then
+            no = 1
+        end
+    end
+    self.LastSFX_ID[name] = no
+    
+    local soundToPlay = self.SFX[name][no]
 
+    soundToPlay:Stop()
+    
+    soundToPlay:SetPitch(pitch + math.random(-5,5)/45 * variance)
+
+    if volume or soundToPlay.BaseVolume then
+        soundToPlay.BaseVolume = soundToPlay.BaseVolume or soundToPlay.Volume
+        soundToPlay:SetVolume(soundToPlay.BaseVolume * (volume or 1))
+    end
+
+    soundToPlay:Play()
+end
 
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
@@ -58,6 +128,7 @@ function Bubble:Update(dt)
         self:Pop()
         
     elseif self.Velocity > 0 then
+        self:BallToInteractableCollision()
         local subdivisions = 1
         if math.abs(self.Velocity) > MAX_X_DIST then
             subdivisions = math.floor(1+math.abs(self.Velocity)/MAX_X_DIST)
@@ -106,7 +177,13 @@ function Bubble:Update(dt)
     
                 self.FramesSinceHit = 0
                 bubble.FramesSinceHit = 0
-    
+                self:PlaySFX("Bump")
+                if self.Velocity <= 1.2 then
+                    self:PlaySFX("LightClink")
+                else
+                    self:PlaySFX("Clink")
+                end
+                self:GetLayer():GetParent().ScreenShake = self:GetLayer():GetParent().ScreenShake + 0.2*self.Velocity
                
                 break
             end
@@ -124,7 +201,11 @@ end
 
 function Bubble:Pop()
     local bubbles = self:GetParent():GetChildren()
-
+    self:PlaySFX("Sink")
+    self:PlaySFX("Pop", 0.5)
+    self:PlaySFX("Uke",1,0)
+    self:PlaySFX("Explode", 3, 4)
+    self:GetLayer():GetParent().ScreenShake = self:GetLayer():GetParent().ScreenShake + 4
     for i, ball in ipairs(bubbles) do
         local vector = ball.Position - self.Position
         
@@ -281,7 +362,7 @@ function Bubble:Draw(tx, ty)
 end
 
 function Bubble:BallToWallCollision()
-    self.Tilemap = self.Tilemap or self:GetParent():GetParent():GetChild("Tilemap")
+    self.Tilemap = self.Tilemap or self:GetParent():GetParent():GetParent():GetChild("TilemapLayer"):GetChild("Tilemap")
     
     for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(self.Tilemap, true, false, true) do
         
@@ -303,6 +384,11 @@ function Bubble:BallToWallCollision()
         self.Velocity = self.Velocity * 0.8
         self.Health = self.Health - 1
         self.FramesSinceHit = 0
+        if self.Velocity <= 1.2 then
+            self:PlaySFX("LightClink")
+        else
+            self:PlaySFX("Clink")
+        end
         return true
         -- self.Position = self.Position - V{hDist, vDist}
     end
@@ -318,5 +404,32 @@ function Bubble:BallToDirtCollision()
     end
 end
 
+function Bubble:BallToInteractableCollision()
+    local interactables = self:GetParent():GetParent():GetChild("Interactables"):GetChildren()
+    
+    for stain, hDist, vDist, tileID in self:CollisionPass(interactables) do
+        if stain:IsA("Refill") then
+            self:PlaySFX("Refill", 1, 3)
+            stain:Emancipate()
+            self.Health = math.min(self.Health+1, 9) 
+            self.DrawScale = V{1.2,1.2}
+
+            
+            self:GetLayer():GetChild("PlusOne"):Emit{
+                Position = V{0,0},
+                Size = V{12,12},
+                SizeVelocity = V{20,20},
+                SizeAcceleration = V{-100,-100},
+                Velocity = V{0,-20,0},
+                Acceleration = V{0,60,0},
+                ColorVelocity = V{0,0,0,-1},
+                RotVelocity = 1,
+                Rotation = math.random(-1,1)/8,
+                AnchorPoint = V{0.5,0.5},
+                Duration = 0.5
+            }
+        end
+    end
+end
 
 return Bubble

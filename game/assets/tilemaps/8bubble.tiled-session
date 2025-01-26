@@ -8,8 +8,11 @@
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "atlas.tsx": {
+            "dynamicWrapping": false
+        }
     },
-    "last.exportedFilePath": "C:/Users/chex/Documents/GitHub/DollysWorldTest/8bubble/game/assets/tilemaps",
+    "last.exportedFilePath": "D:/VSCode/lua/8bubble/game/assets/tilemaps",
     "last.imagePath": "C:/Users/chex/Documents/GitHub/DollysWorldTest/8bubble/game/assets/images",
     "map.height": 22,
     "map.lastUsedExportFilter": "Lua files (*.lua)",
