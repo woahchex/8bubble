@@ -54,7 +54,7 @@ end
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
     
-    if self.Health == 0 then
+    if self.Health < 0 then
         self:Pop()
         
     elseif self.Velocity > 0 then
