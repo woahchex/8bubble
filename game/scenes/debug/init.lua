@@ -446,8 +446,13 @@ local playButton = scoreLayer:Adopt(Gui.new{
     Display = function(self)
         self.Idle = true
 
+        local win = true
         local bubbles = balls:GetChildren()
-        local win = #bubbles == 0
+        for i, ball in ipairs(bubbles) do
+            if ball.Name ~= "Cue Ball" then
+                win = false
+            end
+        end
 
         if win then
             self.Visible = true
