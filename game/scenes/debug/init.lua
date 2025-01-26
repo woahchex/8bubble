@@ -100,7 +100,7 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     HitBubble = function(self)
         self:PlaySFX("Serve")
         
-        
+        self.Health = self.Health - 1
         self.Velocity = cueStick.Power
         self.Direction = (self.Position - cueStick.Position):Normalize()
         self.FramesSinceHit = 0
@@ -224,44 +224,69 @@ local cueBallExitRadius = gameLayer:Adopt(Gui.new{
     end
 })
 
-local bubble1 = balls:Adopt(Bubble.new():Properties{
-    Name = "Test",
-    Size = V{16,16},
-    AnchorPoint = V{0.5,0.5},
-    Position = V{60, 30},
-})
+-- local bubble1 = balls:Adopt(Bubble.new():Properties{
+--     Name = "Test",
+--     Size = V{16,16},
+--     AnchorPoint = V{0.5,0.5},
+--     Position = V{60, 30},
+-- })
 
-local bubble2 = balls:Adopt(Bubble.new():Properties{
-    Name = "Test1",
-    Size = V{16,16},
-    AnchorPoint = V{0.5,0.5},
-    Position = V{60, 10},
-})
+-- local bubble2 = balls:Adopt(Bubble.new():Properties{
+--     Name = "Test1",
+--     Size = V{16,16},
+--     AnchorPoint = V{0.5,0.5},
+--     Position = V{60, 10},
+-- })
 
-local bubble3 = balls:Adopt(Bubble.new():Properties{
-    Name = "Test2",
-    Size = V{16,16},
-    AnchorPoint = V{0.5,0.5},
-    Position = V{20, 30},
-})
+-- local bubble3 = balls:Adopt(Bubble.new():Properties{
+--     Name = "Test2",
+--     Size = V{16,16},
+--     AnchorPoint = V{0.5,0.5},
+--     Position = V{20, 30},
+-- })
 
-local bubble4 = balls:Adopt(Bubble.new():Properties{
-    Name = "Test3",
-    Size = V{16,16},
-    AnchorPoint = V{0.5,0.5},
-    Position = V{40, 30},
-})
+-- local bubble4 = balls:Adopt(Bubble.new():Properties{
+--     Name = "Test3",
+--     Size = V{16,16},
+--     AnchorPoint = V{0.5,0.5},
+--     Position = V{40, 30},
+-- })
 
-local bubble5 = balls:Adopt(Bubble.new():Properties{
-    Name = "Test4",
-    Size = V{16,16},
-    AnchorPoint = V{0.5,0.5},
-    Position = V{0, 30},
-})
+-- local bubble5 = balls:Adopt(Bubble.new():Properties{
+--     Name = "Test4",
+--     Size = V{16,16},
+--     AnchorPoint = V{0.5,0.5},
+--     Position = V{0, 30},
+-- })
 
 tilemapLayer:Adopt(Tilemap.import("game.assets.tilemaps.debug","game/assets/images/tilemap.png")):Properties{
     AnchorPoint = V{0.5,0.5}
 }
+
+local ballSpawns = tilemapLayer:GetChildren()[1]:GetChildren()[1]:GetChildren()
+
+for _, spawn in ipairs(ballSpawns) do
+    if spawn.Name == "Refill" then
+        
+        interactables:Adopt(Refill.new():Properties{
+            Position = spawn.Position - V{390, 235},
+        })
+    elseif spawn.Name ~= "CueBubble" then
+        print("BUBLE", spawn.Health)
+        local bubble = balls:Adopt(Bubble.new():Properties{
+            Name = "Test",
+            Size = V{16,16},
+            AnchorPoint = V{0.5,0.5},
+            Position = spawn.Position - V{390, 235},
+            Health = spawn.Health
+        })
+    else
+        cueBubble.Position = spawn.Position- V{390, 235}
+        cueBubble.Health = spawn.Health
+    end
+    
+    
+end
 
 
 local scoreText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
@@ -293,9 +318,9 @@ local dirt1 = dirt:Adopt(Dirt.new():Properties{
 
 
 -- interactables
-local refill1 = interactables:Adopt(Refill.new():Properties{
+-- local refill1 = interactables:Adopt(Refill.new():Properties{
 
-})
+-- })
 
 
 -- level end screen
