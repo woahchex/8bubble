@@ -1,7 +1,11 @@
+
+local levelNum = 1
+
 -- local RESOLUTION = V{160, 90}
 local scene = GameScene.new()
 scene.Name = "debug"
 scene.Score = 0
+
 -- background
 local gameLayer = scene:GetLayer("Gameplay")
 local tilemapLayer = scene:GetLayer("TilemapLayer")
@@ -102,6 +106,7 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
         self.FramesSinceHit = 0
     end,
 })
+
 local cueGuide
 local visibleCueStick
 cueStick = gameLayer:Adopt(Gui.new{
@@ -175,8 +180,6 @@ cueGuide = scene:GetLayer("BG"):Adopt(Gui.new{
         self.Color[4] = visibleCueStick.Color[4]/2
     end
 })
-
-
 
 local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
     Name = "Enter Radius",
@@ -297,6 +300,7 @@ local refill1 = interactables:Adopt(Refill.new():Properties{
 
 -- level end screen
 local shape4
+
 scoreboard = scoreLayer:Adopt(Gui.new{
     Name = "Scoreboard",
     Size = V{280, 150},
@@ -330,6 +334,7 @@ scoreboard = scoreLayer:Adopt(Gui.new{
         for i, element in ipairs(elements) do
             if element ~= self and element.Name ~= "Transition" then
                 element:Display()
+                print(element.Name)
             end
         end
     end,
@@ -346,6 +351,48 @@ scoreboard = scoreLayer:Adopt(Gui.new{
         end
     end
         
+})
+
+local scoreText = scoreLayer:Adopt(Text.new{
+    Name = "Score",
+    Text = "HIGH SCORE: ",
+    FontSize = 24,
+    TextColor = V{1,1,1},
+    Size = V{300,100},
+    Position = V{0, 0},
+    AnchorPoint = V{0.5, 0.5},
+    AlignMode = "center",
+    Font = Font.new("chexcore/assets/fonts/futura.ttf", 24, "mono"),
+    DrawInForeground = true,
+
+    Update = function (self)
+        if self.Idle then
+            self.Position = self.Position:Lerp(V{0, 0 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: math.sin(Chexcore._clock) * 2
+        else
+            self.Position = self.Position:Lerp(V{0, 350}, 0.1)
+
+            if (V{0, 350} - self.Position):Magnitude() < 0.1 then
+                self.Visible = false
+                self.Active = false
+            end
+        end
+    end,
+
+    Display = function(self)
+        if (scene.Score > _G.highScores[levelNum]) then
+            _G.highScores[levelNum] = scene.Score
+        end
+
+        self.Text = "HIGH SCORE:\n"..tostring(_G.highScores[levelNum])
+        self.Idle = true
+
+        self.Visible = true
+        self.Active = true
+    end,
+
+    Undisplay = function(self)
+        self.Idle = false
+    end
 })
 
 local playButton = scoreLayer:Adopt(Gui.new{
