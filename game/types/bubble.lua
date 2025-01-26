@@ -54,7 +54,7 @@ end
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
     
-    if self.Health < 0 then
+    if self.Health == 0 then
         self:Pop()
         
     elseif self.Velocity > 0 then
@@ -124,7 +124,6 @@ end
 
 function Bubble:Pop()
     local bubbles = self:GetParent():GetChildren()
-    local dirt = self:GetParent():GetParent():GetChild("Dirt"):GetChildren()
 
     for i, ball in ipairs(bubbles) do
         local vector = ball.Position - self.Position
@@ -143,13 +142,9 @@ function Bubble:Pop()
             ball.Velocity = newVector:Magnitude()
         end
     end
-
-    for i, stain in ipairs(dirt) do
-        
-        if (stain.Position - self.Position):Magnitude() < 60 then
-            stain:Emancipate()
-        end
-    end
+    
+    self.Size = self.Size * 3
+    self:BallToDirtCollision()
 
     local pop = self:GetParent():GetParent():Adopt(Prop.new{
         Position = self.Position,
@@ -315,8 +310,11 @@ end
 
 function Bubble:BallToDirtCollision()
     local dirt = self:GetParent():GetParent():GetChild("Dirt"):GetChildren()
-    for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(dirt) do
-        
+    print("Checking Dirt")
+    
+    for stain, hDist, vDist, tileID in self:CollisionPass(dirt) do
+        print(stain)
+        stain:Emancipate()
     end
 end
 
