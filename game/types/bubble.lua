@@ -124,6 +124,8 @@ end
 
 function Bubble:Pop()
     local bubbles = self:GetParent():GetChildren()
+    local dirt = self:GetParent():GetParent():GetChild("Dirt"):GetChildren()
+
     for i, ball in ipairs(bubbles) do
         local vector = ball.Position - self.Position
         
@@ -142,6 +144,12 @@ function Bubble:Pop()
         end
     end
 
+    for i, stain in ipairs(dirt) do
+        
+        if (stain.Position - self.Position):Magnitude() < 60 then
+            stain:Emancipate()
+        end
+    end
 
     local pop = self:GetParent():GetParent():Adopt(Prop.new{
         Position = self.Position,
@@ -286,7 +294,6 @@ function Bubble:BallToWallCollision()
         -- face is Chexcore's best estimate of which face you hit ("top"|"bottom"|"left"|"right")
         -- ask chex about surfaceinfo when different wall types come into play
         if face == "left" or face == "right" then
-            print("Collision wall", self.Position.X)
             self.Direction.X = -self.Direction.X
             self:SetEdge(face, self.Tilemap:GetEdge(face=="left" and "right" or "left", tileNo))
             self.Position.X = self.Position.X + (face=="left" and 1 or -1)

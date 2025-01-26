@@ -4,6 +4,12 @@ local scene = GameScene.new()
 local gameLayer = scene:GetLayer("Gameplay")
 
 local balls = gameLayer:Adopt(Prop.new{
+    Name = "Balls",
+    Visible = false
+})
+
+local dirt = gameLayer:Adopt(Prop.new{
+    Name = "Dirt",
     Visible = false
 })
 
@@ -107,5 +113,12 @@ cueStick = gameLayer:Adopt(Gui.new{
 gameLayer:Adopt(Tilemap.import("game.assets.tilemaps.debug","game/assets/images/tilemap.png")):Properties{
     AnchorPoint = V{0.5,0.5}
 }
+
+local dirt1 = dirt:Adopt(Dirt.new():Properties{
+    Position = V{-16 * 13, 0},
+    Size = V{16, 16 * 4},
+    Color = Vector.Hex"59a4ff",
+    DrawInForeground = true
+})
 
 return scene

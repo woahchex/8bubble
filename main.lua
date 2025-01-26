@@ -9,6 +9,7 @@ require "chexcore"
 function love.load()
     Chexcore:AddType("game.types.gamescene")
     Chexcore:AddType("game.types.bubble")
+    Chexcore:AddType("game.types.dirt")
 
 
     local scene = require("game.scenes.debug.init")
