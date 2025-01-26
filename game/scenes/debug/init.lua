@@ -102,7 +102,8 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
         self.FramesSinceHit = 0
     end,
 })
-
+local cueGuide
+local visibleCueStick
 cueStick = gameLayer:Adopt(Gui.new{
     Name = "Cue Stick",
     Size = V{10, 40},
@@ -125,8 +126,11 @@ cueStick = gameLayer:Adopt(Gui.new{
         self.Rotation = angle
         self.Position = cueBubble.Position + Vector.FromAngle(angle + (math.pi / 2)) * (self.Power * self.Increment)
 
+        
+
         if self.Enabled and balls.BallsMoving == 0 then
-            self.Visible = true
+            -- self.Visible = true
+            visibleCueStick.GoalColor = V{1,1,1,1}
             self.Enabled = false
         end
     end,
@@ -137,9 +141,38 @@ cueStick = gameLayer:Adopt(Gui.new{
     end,
 
     Disable = function(self)
-        self.Visible = false
+        -- self.Visible = false
+        visibleCueStick.GoalColor = V{1,1,1,0}
         self.Active = false
         self.Enabled = false
+    end
+})
+
+visibleCueStick = gameLayer:Adopt(Gui.new{
+    Name = "VisibleCue",
+    Texture = Texture.new("game/scenes/title/cue-stick.png"),
+    Size = V{12,50},
+    GoalColor = V{1,1,1,1},
+    AnchorPoint = V{0.5,0},
+    Update = function (self)
+        
+        self.Position = self.Position:Lerp(cueStick.Position, 0.2)
+        self.Color = self.Color:Lerp(self.GoalColor, 0.2)
+        self.Rotation = math.lerp(self.Rotation, cueStick.Rotation, 1)
+    end
+})
+
+cueGuide = scene:GetLayer("BG"):Adopt(Gui.new{
+    Name = "CueGuide",
+    Texture = Animation.new("game/scenes/title/cue-guide.png",1,8),
+    Size = V{2,512},
+    GoalColor = V{1,1,1,1},
+    AnchorPoint = V{0.5,1},
+    Color = V{1,1,1,1},
+    Update = function (self)
+        self.Position = visibleCueStick.Position
+        self.Rotation = visibleCueStick.Rotation
+        self.Color[4] = visibleCueStick.Color[4]/2
     end
 })
 
@@ -177,6 +210,7 @@ local cueBallExitRadius = gameLayer:Adopt(Gui.new{
         if cueStick.Active then
             cueBubble:HitBubble()
             cueStick:Disable()
+            visibleCueStick.Position = cueBubble.Position
         end
     end,
 
