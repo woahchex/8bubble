@@ -458,6 +458,11 @@ local playButton = scoreLayer:Adopt(Gui.new{
             self.Visible = true
             self.Active = true
         end
+
+        if _G.CurLevel == 5 then
+            self.Active = false
+            self.Visible = false
+        end
     end,
 
     Undisplay = function(self)
