@@ -313,4 +313,12 @@ function Bubble:BallToWallCollision()
     end
 end
 
+function Bubble:BallToDirtCollision()
+    local dirt = self:GetParent():GetParent():GetChild("Dirt"):GetChildren()
+    for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(dirt) do
+        
+    end
+end
+
+
 return Bubble
