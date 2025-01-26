@@ -234,7 +234,10 @@ local refill1 = interactables:Adopt(Refill.new():Properties{
 
 })
 
+
 -- level end screen
+
+local transition
 scoreboard = scoreLayer:Adopt(Gui.new{
     Name = "Scoreboard",
     Size = V{280, 150},
@@ -266,21 +269,22 @@ scoreboard = scoreLayer:Adopt(Gui.new{
 
         local elements = self:GetParent():GetChildren()
         for i, element in ipairs(elements) do
-            if element ~= self then
+            if element ~= self and element.Name ~= "Transition" then
                 element:Display()
             end
         end
     end,
 
     Undisplay = function(self)
-        self.Idle = false
+        self:GetParent():GetChild("Transition"):StartTransition()
+        -- self.Idle = false
 
-        local elements = self:GetParent():GetChildren()
-        for i, element in ipairs(elements) do
-            if element ~= self then
-                element:Undisplay()
-            end
-        end
+        -- local elements = self:GetParent():GetChildren()
+        -- for i, element in ipairs(elements) do
+        --     if element ~= self then
+        --         element:Undisplay()
+        --     end
+        -- end
     end
         
 })
@@ -324,12 +328,160 @@ local button = scoreLayer:Adopt(Gui.new{
     end
 })
 
+local transition = scoreLayer:Adopt(Prop.new{
+    Name = "Transition",
+    Visible = false,
 
+    StartTransition = function(self)
+        local shapes = self:GetChildren()
 
+        for i, shape in ipairs(shapes)do
+            Timer.Schedule(i * 0.2, function()
+                local goalSize = V{1, 1} * ((3 / i) * 285)
+                local rotSpeed = ((math.random(0, 1) * 2) -1) * (math.random() + 2)
 
+                shape:Start(goalSize, rotSpeed)
+            end)
+        end
+    end
+})
 
+local shape1 = transition:Adopt(Gui.new{
+    Name = "Transition Shape 1",
+    Texture = Texture.new("game/scenes/title/septagon.png"),
+    Color = Vector.Hex"5f82f8",
+    Size = V{0, 0},
+    GoalSize = V{0, 0},
+    LerpSpeed = 0,
+    Position = V{0, 0},
+    AnchorPoint = V{0.5, 0.5},
+    RotationSpeed = 0,
+    DrawInForeground = true,
+    State = "Idle",
 
+    Update = function(self)
+        if self.State ~= "Idle" then
+            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
+            self.Rotation = Chexcore._clock * self.RotationSpeed
 
+            if self.State == "Grow" then
+                self.State = "Shrink"
+                
+                Timer.Schedule(2.0, function()
+                    self.GoalSize = V{0, 0}
+                    self.LerpSpeed = 0.1
+                end)
+            end
 
+            if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
+                self:Stop()
+            end
+        end
+    end,
+
+    Start = function(self, goalSize, rotSpeed)
+        self.GoalSize = goalSize
+        self.RotationSpeed = rotSpeed
+        self.LerpSpeed = 0.05
+
+        self.State = "Grow"
+    end,
+
+    Stop = function(self)
+        self.State = "Idle"
+    end
+})
+
+local shape2 = transition:Adopt(Gui.new{
+    Name = "Transition Shape 2",
+    Texture = Texture.new("game/scenes/title/septagon.png"),
+    Color = Vector.Hex"59a4ff",
+    Size = V{0, 0},
+    GoalSize = V{0, 0},
+    LerpSpeed = 0,
+    Position = V{0, 0},
+    AnchorPoint = V{0.5, 0.5},
+    RotationSpeed = 0,
+    DrawInForeground = true,
+    State = "Idle",
+
+    Update = function(self)
+        if self.State ~= "Idle" then
+            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
+            self.Rotation = Chexcore._clock * self.RotationSpeed
+
+            if self.State == "Grow" then
+                self.State = "Shrink"
+                
+                Timer.Schedule(2.0, function()
+                    self.GoalSize = V{0, 0}
+                    self.LerpSpeed = 0.1
+                end)
+            end
+
+            if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
+                self:Stop()
+            end
+        end
+    end,
+
+    Start = function(self, goalSize, rotSpeed)
+        self.GoalSize = goalSize
+        self.RotationSpeed = rotSpeed
+        self.LerpSpeed = 0.05
+
+        self.State = "Grow"
+    end,
+
+    Stop = function(self)
+        self.State = "Idle"
+    end
+})
+
+local shape3 = transition:Adopt(Gui.new{
+    Name = "Transition Shape 3",
+    Texture = Texture.new("game/scenes/title/septagon.png"),
+    Color = Vector.Hex"fffba6",
+    Size = V{0, 0},
+    GoalSize = V{0, 0},
+    LerpSpeed = 0,
+    Position = V{0, 0},
+    AnchorPoint = V{0.5, 0.5},
+    RotationSpeed = 0,
+    DrawInForeground = true,
+    State = "Idle",
+
+    Update = function(self)
+        if self.State ~= "Idle" then
+            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
+            self.Rotation = Chexcore._clock * self.RotationSpeed
+
+            if self.State == "Grow" then
+                self.State = "Shrink"
+                
+                Timer.Schedule(2.0, function()
+                    self.GoalSize = V{0, 0}
+                    self.LerpSpeed = 0.1
+                end)
+            end
+
+            if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
+                self:Stop()
+            end
+        end
+    end,
+
+    Start = function(self, goalSize, rotSpeed)
+        self.GoalSize = goalSize
+        self.RotationSpeed = rotSpeed
+        self.LerpSpeed = 0.05
+
+        self.State = "Grow"
+    end,
+
+    Stop = function(self)
+        self.State = "Idle"
+    end
+})
 
 return scene
