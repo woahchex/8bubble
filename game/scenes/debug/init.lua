@@ -22,8 +22,9 @@ Particles.new{
     ParticleTexture = Texture.new("game/scenes/title/sphere.png"),
 }:Nest(gameLayer)
 
-local scoreboard
 local cueStick
+local scoreboard
+local transition
 
 local balls = gameLayer:Adopt(Prop.new{
     Name = "Balls",
@@ -272,8 +273,6 @@ local refill1 = interactables:Adopt(Refill.new():Properties{
 
 
 -- level end screen
-
-local transition
 scoreboard = scoreLayer:Adopt(Gui.new{
     Name = "Scoreboard",
     Size = V{280, 150},
@@ -312,23 +311,23 @@ scoreboard = scoreLayer:Adopt(Gui.new{
     end,
 
     Undisplay = function(self)
-        self:GetParent():GetChild("Transition"):StartTransition()
-        -- self.Idle = false
+        self.Idle = false
 
-        -- local elements = self:GetParent():GetChildren()
-        -- for i, element in ipairs(elements) do
-        --     if element ~= self then
-        --         element:Undisplay()
-        --     end
-        -- end
+        local elements = self:GetParent():GetChildren()
+        for i, element in ipairs(elements) do
+            print(element.Name)
+            if element ~= self and element.Name ~= "Shape" and element.Name ~= "Transition" then
+                element:Undisplay()
+            end
+        end
     end
         
 })
 
-local button = scoreLayer:Adopt(Gui.new{
+local playButton = scoreLayer:Adopt(Gui.new{
     Name = "Button",
     Size = V{24, 24},
-    Position = V{0, 400},
+    Position = V{60, 400},
     AnchorPoint = V{0.5, 0.5},
     Texture = Texture.new("game/scenes/title/play-button.png"),
     Idle = false,
@@ -337,11 +336,11 @@ local button = scoreLayer:Adopt(Gui.new{
     
     Update = function(self)
         if self.Idle then
-            self.Position = self.Position:Lerp(V{0, 50 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: 
+            self.Position = self.Position:Lerp(V{60, 50 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: 
         else
-            self.Position = self.Position:Lerp(V{0, 400}, 0.1)
+            self.Position = self.Position:Lerp(V{60, 400}, 0.1)
 
-            if (V{0, 400} - self.Position):Magnitude() < 0.1 then
+            if (V{60, 400} - self.Position):Magnitude() < 0.1 then
                 self.Visible = false
                 self.Active = false
             end
@@ -360,30 +359,77 @@ local button = scoreLayer:Adopt(Gui.new{
     end,
 
     OnSelectStart = function(self)
+        transition:StartTransition()
         scoreboard:Undisplay()
     end
 })
 
-local transition = scoreLayer:Adopt(Prop.new{
+local redoButton = scoreLayer:Adopt(Gui.new{
+    Name = "Button",
+    Size = V{24, 24},
+    Position = V{-60, 400},
+    AnchorPoint = V{0.5, 0.5},
+    Texture = Texture.new("game/scenes/title/redo-button.png"),
+    Idle = false,
+    Visible = false,
+    Active = false,
+    
+    Update = function(self)
+        if self.Idle then
+            self.Position = self.Position:Lerp(V{-60, 50 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: 
+        else
+            self.Position = self.Position:Lerp(V{-60, 400}, 0.1)
+
+            if (V{-60, 400} - self.Position):Magnitude() < 0.1 then
+                self.Visible = false
+                self.Active = false
+            end
+        end
+    end,
+
+    Display = function(self)
+        self.Idle = true
+
+        self.Visible = true
+        self.Active = true
+    end,
+
+    Undisplay = function(self)
+        self.Idle = false
+    end,
+
+    OnSelectStart = function(self)
+        transition:StartTransition()
+        scoreboard:Undisplay()
+    end
+})
+
+transition = scoreLayer:Adopt(Prop.new{
     Name = "Transition",
     Visible = false,
 
     StartTransition = function(self)
         local shapes = self:GetChildren()
 
+        local delay = 0.2
+
         for i, shape in ipairs(shapes)do
-            Timer.Schedule(i * 0.2, function()
+            Timer.Schedule(i * delay, function()
                 local goalSize = V{1, 1} * ((3 / i) * 285)
                 local rotSpeed = ((math.random(0, 1) * 2) -1) * (math.random() + 2)
 
                 shape:Start(goalSize, rotSpeed)
             end)
+
+            if i == 3 then
+                delay = 0.4
+            end
         end
     end
 })
 
 local shape1 = transition:Adopt(Gui.new{
-    Name = "Transition Shape 1",
+    Name = "Shape",
     Texture = Texture.new("game/scenes/title/septagon.png"),
     Color = Vector.Hex"5f82f8",
     Size = V{0, 0},
@@ -393,25 +439,12 @@ local shape1 = transition:Adopt(Gui.new{
     AnchorPoint = V{0.5, 0.5},
     RotationSpeed = 0,
     DrawInForeground = true,
-    State = "Idle",
+    Idle = true,
 
     Update = function(self)
-        if self.State ~= "Idle" then
+        if not self.Idle then
             self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
             self.Rotation = Chexcore._clock * self.RotationSpeed
-
-            if self.State == "Grow" then
-                self.State = "Shrink"
-                
-                Timer.Schedule(2.0, function()
-                    self.GoalSize = V{0, 0}
-                    self.LerpSpeed = 0.1
-                end)
-            end
-
-            if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
-                self:Stop()
-            end
         end
     end,
 
@@ -420,16 +453,12 @@ local shape1 = transition:Adopt(Gui.new{
         self.RotationSpeed = rotSpeed
         self.LerpSpeed = 0.05
 
-        self.State = "Grow"
+        self.Idle = false
     end,
-
-    Stop = function(self)
-        self.State = "Idle"
-    end
 })
 
 local shape2 = transition:Adopt(Gui.new{
-    Name = "Transition Shape 2",
+    Name = "Shape",
     Texture = Texture.new("game/scenes/title/septagon.png"),
     Color = Vector.Hex"59a4ff",
     Size = V{0, 0},
@@ -439,25 +468,12 @@ local shape2 = transition:Adopt(Gui.new{
     AnchorPoint = V{0.5, 0.5},
     RotationSpeed = 0,
     DrawInForeground = true,
-    State = "Idle",
+    Idle = true,
 
     Update = function(self)
-        if self.State ~= "Idle" then
+        if not self.Idle then
             self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
             self.Rotation = Chexcore._clock * self.RotationSpeed
-
-            if self.State == "Grow" then
-                self.State = "Shrink"
-                
-                Timer.Schedule(2.0, function()
-                    self.GoalSize = V{0, 0}
-                    self.LerpSpeed = 0.1
-                end)
-            end
-
-            if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
-                self:Stop()
-            end
         end
     end,
 
@@ -466,16 +482,12 @@ local shape2 = transition:Adopt(Gui.new{
         self.RotationSpeed = rotSpeed
         self.LerpSpeed = 0.05
 
-        self.State = "Grow"
+        self.Idle = false
     end,
-
-    Stop = function(self)
-        self.State = "Idle"
-    end
 })
 
 local shape3 = transition:Adopt(Gui.new{
-    Name = "Transition Shape 3",
+    Name = "Shape",
     Texture = Texture.new("game/scenes/title/septagon.png"),
     Color = Vector.Hex"fffba6",
     Size = V{0, 0},
@@ -485,20 +497,44 @@ local shape3 = transition:Adopt(Gui.new{
     AnchorPoint = V{0.5, 0.5},
     RotationSpeed = 0,
     DrawInForeground = true,
-    State = "Idle",
+    Idle = true,
+
+    Update = function(self)
+        if not self.Idle then
+            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
+            self.Rotation = Chexcore._clock * self.RotationSpeed
+        end
+    end,
+
+    Start = function(self, goalSize, rotSpeed)
+        self.GoalSize = goalSize
+        self.RotationSpeed = rotSpeed
+        self.LerpSpeed = 0.05
+
+        self.Idle = false
+    end,
+})
+
+local shape4 = transition:Adopt(Gui.new{
+    Name = "Shape",
+    Texture = Texture.new("game/scenes/title/septagon.png"),
+    Color = Vector.Hex"000000",
+    Size = V{1, 1} * 860,
+    GoalSize = V{0, 0},
+    LerpSpeed = 0.08,
+    Position = V{0, 0},
+    AnchorPoint = V{0.5, 0.5},
+    RotationSpeed = 2,
+    DrawInForeground = true,
+    State = "Shrink",
 
     Update = function(self)
         if self.State ~= "Idle" then
             self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
             self.Rotation = Chexcore._clock * self.RotationSpeed
 
-            if self.State == "Grow" then
-                self.State = "Shrink"
-                
-                Timer.Schedule(2.0, function()
-                    self.GoalSize = V{0, 0}
-                    self.LerpSpeed = 0.1
-                end)
+            if self.State == "Grow" and (self.Size - self.GoalSize):Magnitude() < 1 then
+                self:GetLayer():GetParent():Reload()
             end
 
             if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
@@ -508,11 +544,10 @@ local shape3 = transition:Adopt(Gui.new{
     end,
 
     Start = function(self, goalSize, rotSpeed)
-        self.GoalSize = goalSize
-        self.RotationSpeed = rotSpeed
-        self.LerpSpeed = 0.05
-
         self.State = "Grow"
+
+        self.GoalSize = V{1, 1} * 860
+        self.LerpSpeed = 0.04
     end,
 
     Stop = function(self)
