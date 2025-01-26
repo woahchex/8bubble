@@ -123,8 +123,6 @@ end
 
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
-    
-    
 
     if self.Health == 0 then
         self:Pop()
@@ -210,17 +208,13 @@ function Bubble:Update(dt)
             local collided = self:BallToWallCollision()
             if collided then break end
         end
-        
-
     end
 
     -- updating framevalues
     self.FramesSinceHit = self.FramesSinceHit + 1
 end
 
-
 function Bubble:Pop()
-    local bubbles = self:GetParent():GetChildren()
     self:PlaySFX("Sink")
     self:PlaySFX("Pop", 0.5)
     self:PlaySFX("Uke",1,0)
@@ -255,6 +249,8 @@ function Bubble:Pop()
             Duration = 2
         }
     end
+    
+    local bubbles = self:GetParent():GetChildren()
     for i, ball in ipairs(bubbles) do
         local vector = ball.Position - self.Position
         
@@ -289,7 +285,6 @@ function Bubble:Pop()
     Timer.Schedule(0.3, function()
         pop:Emancipate()
     end)
-
 
     self:Emancipate()
 end

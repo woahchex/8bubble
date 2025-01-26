@@ -21,9 +21,24 @@ Particles.new{
     ParticleColor = V{1,1,1,1},
     ParticleTexture = Texture.new("game/scenes/title/sphere.png"),
 }:Nest(gameLayer)
+
 local balls = gameLayer:Adopt(Prop.new{
     Name = "Balls",
-    Visible = false
+    Visible = false,
+    BallsMoving = 0,
+
+    Update = function(self)
+        local bubbles = self:GetChildren()
+
+        local numBalls = 0
+        for i, ball in ipairs(bubbles) do
+            if ball.Velocity > 0 then
+                numBalls = numBalls + 1
+            end
+        end
+
+        self.BallsMoving = numBalls
+    end
 })
 
 local dirt = gameLayer:Adopt(Prop.new{
@@ -51,11 +66,9 @@ Particles.new{
     ParticleTexture = Texture.new("game/assets/images/plusone.png"),
 }:Nest(gameLayer)
 
-
-
 local cueStick
 local cueBubble = balls:Adopt(Bubble.new():Properties{
-    Name = "Cue",
+    Name = "Cue Ball",
     Size = V{16,16},
     AnchorPoint = V{0.5,0.5},
     Position = V{-20, 30},
@@ -63,24 +76,91 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     Velocity = 0,
     Shader = Shader.new("game/assets/shaders/1px-black-outline.glsl"):Send("step", V{1,1}/V{32,32}*2),
 
-    OnSelectStart = function(self)
-        if self.Velocity <= 0 then
-            cueStick.Visible = not cueStick.Visible
-            cueStick.Active = not cueStick.Active
+    HitBubble = function(self)
+        self:PlaySFX("Serve")
+
+        self.Velocity = cueStick.Power
+        self.Direction = (self.Position - cueStick.Position):Normalize()
+        self.FramesSinceHit = 0
+    end
+})
+
+cueStick = gameLayer:Adopt(Gui.new{
+    Name = "Cue Stick",
+    Size = V{10, 40},
+    AnchorPoint = V{0.5, 0},
+    Position = V{0, 30},
+    Visible = false,
+    Active = false,
+    Enabled = false,
+    Division = (math.pi / 8),
+    Power = 0,
+    Increment = 30,
+    
+    Update = function(self)
+        local mouseAngle = (gameLayer:GetMousePosition() - cueBubble.Position)
+        local mouseDistance = math.max(self.Increment, math.min(mouseAngle:Magnitude(), self.Increment * 3))
+
+        local angle = math.round(-mouseAngle:ToAngle() / self.Division) * self.Division
+        self.Power = math.floor(mouseDistance / self.Increment)
+
+        self.Rotation = angle
+        self.Position = cueBubble.Position + Vector.FromAngle(angle + (math.pi / 2)) * (self.Power * self.Increment)
+
+        if self.Enabled and balls.BallsMoving == 0 then
+            self.Visible = true
         end
     end,
 
-    OnSelectEnd = function(self)
-        if cueStick.Active and (gameLayer:GetMousePosition() - self.Position):Magnitude() >= 30 then
-            self:PlaySFX("Serve")
-            
-            self.Velocity = cueStick.Power
-            self.Direction = (self.Position - cueStick.Position):Normalize()
-            self.FramesSinceHit = 0
-        end
+    Enable = function(self)
+        self.Active = true
+        self.Enabled = true
+    end,
 
-        cueStick.Visible = false
-        cueStick.Active = false
+    Disable = function(self)
+        self.Visible = false
+        self.Active = false
+        self.Enabled = false
+    end
+})
+
+local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
+    Name = "Enter Radius",
+    Size = V{1, 1} * cueStick.Increment * 2,
+    AnchorPoint = V{0.5, 0.5},
+    Position = cueBubble.Position,
+    Visible = false,
+
+    Update = function(self)
+        self.Position = cueBubble.Position
+    end,
+
+    OnHoverStart = function(self)
+        cueStick:Enable()
+    end
+})
+
+local cueBallExitRadius = gameLayer:Adopt(Gui.new{
+    Name = "Exit Radius",
+    Size = V{1, 1} * ((cueStick.Increment * 6) + 80),
+    AnchorPoint = V{0.5, 0.5},
+    Position = cueBubble.Position,
+    Visible = false,
+    BallsMoving = false,
+
+    Update = function(self)
+        self.Position = cueBubble.Position
+    end,
+
+    OnSelectStart = function(self)
+        if cueStick.Active then
+            cueBubble:HitBubble()
+            cueStick:Disable()
+        end
+    end,
+
+    OnHoverEnd = function(self)
+        cueStick:Disable()
     end
 })
 
@@ -117,42 +197,6 @@ local bubble5 = balls:Adopt(Bubble.new():Properties{
     Size = V{16,16},
     AnchorPoint = V{0.5,0.5},
     Position = V{0, 30},
-})
-
-cueStick = gameLayer:Adopt(Gui.new{
-    Name = "Cue Stick",
-    Size = V{10, 40},
-    AnchorPoint = V{0.5, 0},
-    Position = V{0, 30},
-    Visible = false,
-    Active = false,
-    Division = (math.pi / 8),
-    Power = 0,
-    Increment = 30,
-    
-    Update = function(self)
-        local mouseAngle = (gameLayer:GetMousePosition() - cueBubble.Position)
-        local mouseDistance = math.max(self.Increment, math.min(mouseAngle:Magnitude(), self.Increment * 3))
-
-        local angle = math.round(-mouseAngle:ToAngle() / self.Division) * self.Division
-        self.Power = math.floor(mouseDistance / self.Increment)
-
-        self.Rotation = angle
-        self.Position = cueBubble.Position + Vector.FromAngle(angle + (math.pi / 2)) * (self.Power * self.Increment)
-    end,
-
-    OnSelectStart = function(self)
-        if self.Active then
-            
-            cueBubble.Velocity = self.Power
-            cueBubble.Direction = (cueBubble.Position - cueStick.Position):Normalize()
-            cueBubble.FramesSinceHit = 0
-
-            self.Visible = false
-            self.Active = false
-            
-        end
-    end
 })
 
 tilemapLayer:Adopt(Tilemap.import("game.assets.tilemaps.debug","game/assets/images/tilemap.png")):Properties{
