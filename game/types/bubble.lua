@@ -416,7 +416,15 @@ function Bubble:BallToWallCollision()
     for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(self.Tilemap, true, false, true) do
         
         local surfaceInfo = self.Tilemap:GetSurfaceInfo(tileID)
+
+
+
         local face = Prop.GetHitFace(hDist,vDist)
+
+
+        
+
+
         -- hDist is # pixels horizontally inside the tile the bubble is (pos=wall on left, neg=wall on right)
         -- vDist is # pixels vertically inside the tile the bubble is (pos=wall on top, neg=wall on bottom)
         -- face is Chexcore's best estimate of which face you hit ("top"|"bottom"|"left"|"right")
@@ -437,6 +445,10 @@ function Bubble:BallToWallCollision()
             self:PlaySFX("LightClink")
         else
             self:PlaySFX("Clink")
+        end
+
+        if (surfaceInfo["Bottom"] or {}).Spikes or (surfaceInfo["Right"] or {}).Spikes or (surfaceInfo["Top"] or {}).Spikes or (surfaceInfo["Left"] or {}).Spikes then
+            self:Pop()
         end
         return true
         -- self.Position = self.Position - V{hDist, vDist}
