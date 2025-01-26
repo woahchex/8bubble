@@ -1,5 +1,6 @@
 -- local RESOLUTION = V{160, 90}
 local scene = GameScene.new()
+scene.Name = "debug"
 
 -- background
 local gameLayer = scene:GetLayer("Gameplay")
@@ -93,7 +94,8 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
 
     HitBubble = function(self)
         self:PlaySFX("Serve")
-
+        
+        
         self.Velocity = cueStick.Power
         self.Direction = (self.Position - cueStick.Position):Normalize()
         self.FramesSinceHit = 0
@@ -108,7 +110,7 @@ cueStick = gameLayer:Adopt(Gui.new{
     Visible = false,
     Active = false,
     Enabled = false,
-    Division = (math.pi / 8),
+    Division = (math.pi / 12),
     Power = 0,
     Increment = 30,
     

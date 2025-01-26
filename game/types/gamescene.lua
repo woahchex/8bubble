@@ -105,6 +105,20 @@ function GameScene:Update(dt)
 
     return Scene.Update(self,dt)
 end
+
+local function reload(module_name)
+    -- Remove the module from the package.loaded table
+    package.loaded[module_name] = nil
+    -- Require the module again, forcing a fresh load
+    return require(module_name)
+end
+
+function GameScene:Reload()
+    Chexcore.UnmountScene(self)
+    local scene = reload("game.scenes."..self.Name..".init")
+    
+    Chexcore.MountScene(scene)
+end
 ----------------------------------------
 
 return GameScene
