@@ -273,6 +273,7 @@ local refill1 = interactables:Adopt(Refill.new():Properties{
 
 
 -- level end screen
+local shape4
 scoreboard = scoreLayer:Adopt(Gui.new{
     Name = "Scoreboard",
     Size = V{280, 150},
@@ -361,6 +362,10 @@ local playButton = scoreLayer:Adopt(Gui.new{
     OnSelectStart = function(self)
         transition:StartTransition()
         scoreboard:Undisplay()
+
+        Timer.Schedule(2.5, function()
+            -- Insert code to load new level
+        end)
     end
 })
 
@@ -401,6 +406,10 @@ local redoButton = scoreLayer:Adopt(Gui.new{
     OnSelectStart = function(self)
         transition:StartTransition()
         scoreboard:Undisplay()
+
+        Timer.Schedule(3.5, function()
+            self:GetLayer():GetParent():Reload()
+        end)
     end
 })
 
@@ -515,7 +524,7 @@ local shape3 = transition:Adopt(Gui.new{
     end,
 })
 
-local shape4 = transition:Adopt(Gui.new{
+shape4 = transition:Adopt(Gui.new{
     Name = "Shape",
     Texture = Texture.new("game/scenes/title/septagon.png"),
     Color = Vector.Hex"000000",
@@ -527,6 +536,7 @@ local shape4 = transition:Adopt(Gui.new{
     RotationSpeed = 2,
     DrawInForeground = true,
     State = "Shrink",
+    Function = function() end,
 
     Update = function(self)
         if self.State ~= "Idle" then
@@ -534,7 +544,7 @@ local shape4 = transition:Adopt(Gui.new{
             self.Rotation = Chexcore._clock * self.RotationSpeed
 
             if self.State == "Grow" and (self.Size - self.GoalSize):Magnitude() < 1 then
-                self:GetLayer():GetParent():Reload()
+                self.Function()
             end
 
             if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
@@ -548,6 +558,7 @@ local shape4 = transition:Adopt(Gui.new{
 
         self.GoalSize = V{1, 1} * 860
         self.LerpSpeed = 0.04
+        self.Function = toCall
     end,
 
     Stop = function(self)
