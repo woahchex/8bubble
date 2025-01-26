@@ -55,25 +55,7 @@ function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
     
     if self.Health == 0 then
-        for i, ball in ipairs(bubbles) do
-            local vector = ball.Position - self.Position
-            
-            if vector:Magnitude() < 32 then
-                local vector1 = vector:Normalize() * (32 / vector:Magnitude())
-                local vector2 = ball.Direction * ball.Velocity
-                local n = vector:Normalize()
-    
-                local a1 = 0 + (vector1 * n)
-                local a2 = 0 + (vector2 * n)
-                local p = (2.0 * (a1 - a2))
-
-                local newVector = vector2 + (n * p)
-                ball.Direction = newVector:Normalize()
-                ball.Velocity = newVector:Magnitude()
-            end
-        end
-
-        self:Emancipate()
+        self:Pop()
         
     elseif self.Velocity > 0 then
         local subdivisions = 1
@@ -139,16 +121,59 @@ function Bubble:Update(dt)
     self.FramesSinceHit = self.FramesSinceHit + 1
 end
 
+
+function Bubble:Pop()
+    local bubbles = self:GetParent():GetChildren()
+    for i, ball in ipairs(bubbles) do
+        local vector = ball.Position - self.Position
+        
+        if vector:Magnitude() < 32 then
+            local vector1 = vector:Normalize() * (32 / vector:Magnitude())
+            local vector2 = ball.Direction * ball.Velocity
+            local n = vector:Normalize()
+
+            local a1 = 0 + (vector1 * n)
+            local a2 = 0 + (vector2 * n)
+            local p = (2.0 * (a1 - a2))
+
+            local newVector = vector2 + (n * p)
+            ball.Direction = newVector:Normalize()
+            ball.Velocity = newVector:Magnitude()
+        end
+    end
+
+
+    local pop = self:GetParent():GetParent():Adopt(Prop.new{
+        Position = self.Position,
+        Texture = Animation.new("game/assets/images/bubble-pop.png", 1, 4):Properties{
+            Loop = false,
+            Duration = 0.3
+        },
+        AnchorPoint = V{0.5,0.5},
+        Size=V{40,40},
+    })
+
+    Timer.Schedule(0.3, function()
+        pop:Emancipate()
+    end)
+
+
+    self:Emancipate()
+end
+
 local lg, floor = love.graphics, math.floor
 function Bubble:Draw(tx, ty)
     local oldshader
     -- self.DrawScale = V{1+math.sin(Chexcore._clock)/4,1}
     -- self.Rotation = self.Rotation + 0.01
     local dv = self.Direction or V{0,0}
-    self.Rotation = V{-dv.X, dv.Y}:ToAngle()
+    
     
     if self.FramesSinceHit == 1 then
         self.DrawScale = V{1,1-self.Velocity/10}
+        self.Rotation = V{-dv.X, dv.Y}:ToAngle()
+    else
+        self.Rotation = math.lerp(self.Rotation, 0, 0.045, 0.02)
     end
     self.DrawScale = self.DrawScale:Lerp(V{1,1},0.05)
 

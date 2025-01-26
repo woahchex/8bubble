@@ -20,6 +20,7 @@
     "openFiles": [
     ],
     "project": "8bubble.tiled-project",
+    "property.type": "bool",
     "recentFiles": [
     ],
     "tileset.lastUsedFormat": "tsx",
