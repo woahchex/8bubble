@@ -1,7 +1,7 @@
 -- local RESOLUTION = V{160, 90}
 local scene = GameScene.new()
 scene.Name = "debug"
-
+scene.Score = 0
 -- background
 local gameLayer = scene:GetLayer("Gameplay")
 local tilemapLayer = scene:GetLayer("TilemapLayer")
@@ -176,6 +176,8 @@ cueGuide = scene:GetLayer("BG"):Adopt(Gui.new{
     end
 })
 
+
+
 local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
     Name = "Enter Radius",
     Size = V{1, 1} * ((cueStick.Increment * 2) + 40),
@@ -257,6 +259,26 @@ local bubble5 = balls:Adopt(Bubble.new():Properties{
 tilemapLayer:Adopt(Tilemap.import("game.assets.tilemaps.debug","game/assets/images/tilemap.png")):Properties{
     AnchorPoint = V{0.5,0.5}
 }
+
+
+local scoreText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
+    Name = "Score",
+    Text = "SCORE: 0",
+    FontSize = 10,
+    TextColor = V{1,1,1},
+    Size = V{1000,100},
+    Position = V{-185,-107},
+    Font = Font.new("chexcore/assets/fonts/futura.ttf", 10, "mono"),
+    Update = function (self)
+        local new = "SCORE: "..tostring(scene.Score)
+        if new ~= self.Text then
+            self.FontSize = 12
+        end
+        self.Text = new
+        
+        self.FontSize = math.lerp(self.FontSize, 10, 0.2)
+    end
+})
 
 local dirt1 = dirt:Adopt(Dirt.new():Properties{
     Position = V{-16 * 13, 0},

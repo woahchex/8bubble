@@ -196,6 +196,7 @@ function Bubble:Update(dt)
                 self.FramesSinceHit = 0
                 bubble.FramesSinceHit = 0
                 self:PlaySFX("Bump")
+                self:GetLayer():GetParent().Score = self:GetLayer():GetParent().Score + 10
                 if self.Velocity <= 1.2 then
                     self:PlaySFX("LightClink")
                 else
@@ -220,7 +221,7 @@ function Bubble:Pop()
     self:PlaySFX("Uke",1,0)
     self:PlaySFX("Explode", 3, 4)
     self:GetLayer():GetParent().ScreenShake = self:GetLayer():GetParent().ScreenShake + 4
-    
+    self:GetLayer():GetParent().Score = self:GetLayer():GetParent().Score + 100*(self.Health+1)
     for i = 0, 330, 30 do
         self:GetLayer():GetChild("BubbleParticle"):Emit{
             Position = self.Position,--+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
