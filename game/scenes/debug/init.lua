@@ -11,6 +11,7 @@ local gameLayer = scene:GetLayer("Gameplay")
 local tilemapLayer = scene:GetLayer("TilemapLayer")
 local scoreLayer = scene:GetLayer("Score")
 
+local timeText
 Particles.new{
     Name = "BubbleParticle",
     AnchorPoint = V{0.5, 0.5},
@@ -38,6 +39,25 @@ local balls = gameLayer:Adopt(Prop.new{
     LevelEnd = false,
 
     Update = function(self)
+        local children = self:GetChildren()
+        if not self:GetChild("Cue Ball") then
+            cueStick:Disable()
+            local stop = true
+            
+            for i, b in ipairs(children) do
+                if b.Velocity > 0.05 then
+                    stop = false
+                    break
+                end
+            end
+            
+            if stop then
+                self:EndLevel()
+            end
+        elseif #children==1 and children[1].Name == "Cue Ball" then
+            self:EndLevel()
+        end
+
         local bubbles = self:GetChildren()
 
         local numBalls = 0
@@ -60,6 +80,7 @@ local balls = gameLayer:Adopt(Prop.new{
 
     EndLevel = function(self)
         self.CheckEnd = true
+        timeText.EndTime = Chexcore._clock
     end
 })
 
@@ -95,12 +116,15 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     Position = V{-20, 30},
     Direction = V{0, 0},
     Velocity = 0,
+    PreventExplosionUntilStop = false,
     Shader = Shader.new("game/assets/shaders/1px-black-outline.glsl"):Send("step", V{1,1}/V{32,32}*2),
 
     HitBubble = function(self)
         self:PlaySFX("Serve")
+        timeText.StartTime = Chexcore._clock
         
         self.Health = self.Health - 1
+        if self.Health == 0 then self.PreventExplosionUntilStop = true end
         self.Velocity = cueStick.Power
         self.Direction = (self.Position - cueStick.Position):Normalize()
         self.FramesSinceHit = 0
@@ -117,13 +141,13 @@ cueStick = gameLayer:Adopt(Gui.new{
     Visible = false,
     Active = false,
     Enabled = false,
-    Division = (math.pi / 36),
+    Division = (math.pi / 144*2),
     Power = 0,
-    Increment = 30,
+    Increment = 20,
     
     Update = function(self)
         local mouseAngle = (gameLayer:GetMousePosition() - cueBubble.Position)
-        local mouseDistance = math.max(self.Increment, math.min(mouseAngle:Magnitude(), self.Increment * 3))
+        local mouseDistance = math.max(self.Increment, math.min(mouseAngle:Magnitude(), self.Increment * 4))
 
         local angle = math.round(-mouseAngle:ToAngle() / self.Division) * self.Division
         self.Power = math.floor(mouseDistance / self.Increment)
@@ -133,10 +157,10 @@ cueStick = gameLayer:Adopt(Gui.new{
 
         
 
-        if self.Enabled and balls.BallsMoving == 0 then
+        if self.Enabled then
             -- self.Visible = true
             visibleCueStick.GoalColor = V{1,1,1,1}
-            self.Enabled = false
+            -- self.Enabled = false
         end
     end,
 
@@ -161,7 +185,7 @@ visibleCueStick = gameLayer:Adopt(Gui.new{
     AnchorPoint = V{0.5,0},
     Update = function (self)
         
-        self.Position = self.Position:Lerp(cueStick.Position, 0.2)
+        self.Position = self.Position:Lerp(cueStick.Position, 0.5)
         self.Color = self.Color:Lerp(self.GoalColor, 0.2)
         self.Rotation = math.lerp(self.Rotation, cueStick.Rotation, 1)
     end
@@ -183,7 +207,7 @@ cueGuide = scene:GetLayer("BG"):Adopt(Gui.new{
 
 local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
     Name = "Enter Radius",
-    Size = V{1, 1} * ((cueStick.Increment * 2) + 40),
+    Size = V{1, 1} * ((cueStick.Increment * 10) + 40),
     AnchorPoint = V{0.5, 0.5},
     Position = cueBubble.Position,
     Visible = false,
@@ -196,12 +220,16 @@ local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
         if not balls.LevelEnd then
             cueStick:Enable()
         end
+    end,
+
+    OnHoverEnd = function (self)
+        cueStick:Disable()
     end
 })
 
 local cueBallExitRadius = gameLayer:Adopt(Gui.new{
     Name = "Exit Radius",
-    Size = V{1, 1} * ((cueStick.Increment * 6) + 80),
+    Size = V{1, 1} * ((cueStick.Increment * 10) + 80),
     AnchorPoint = V{0.5, 0.5},
     Position = cueBubble.Position,
     Visible = false,
@@ -214,13 +242,13 @@ local cueBallExitRadius = gameLayer:Adopt(Gui.new{
     OnSelectStart = function(self)
         if cueStick.Active then
             cueBubble:HitBubble()
-            cueStick:Disable()
+            -- cueStick:Disable()
             visibleCueStick.Position = cueBubble.Position
         end
     end,
 
     OnHoverEnd = function(self)
-        cueStick:Disable()
+        
     end
 })
 
@@ -272,7 +300,6 @@ for _, spawn in ipairs(ballSpawns) do
             Position = spawn.Position - V{390, 235},
         })
     elseif spawn.Name ~= "CueBubble" then
-        print("BUBLE", spawn.Health)
         local bubble = balls:Adopt(Bubble.new():Properties{
             Name = "Test",
             Size = V{16,16},
@@ -288,6 +315,13 @@ for _, spawn in ipairs(ballSpawns) do
     
 end
 
+local function timeFormat(seconds)
+    local minutes = math.floor(seconds / 60)
+    local secs = math.floor(seconds % 60)
+    local millis = math.floor((seconds % 1) * 1000)
+    
+    return string.format("%02d:%02d.%.03d", minutes, secs, millis)
+end
 
 local scoreText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
     Name = "Score",
@@ -305,6 +339,34 @@ local scoreText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
         self.Text = new
         
         self.FontSize = math.lerp(self.FontSize, 10, 0.2)
+    end
+})
+timeText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
+    Name = "Time",
+    Text = "TIME: 00:00:00",
+    StartTime = 0,
+    EndTime = nil,
+    Status = "Waiting",
+    FontSize = 10,
+    TextColor = V{1,1,1},
+    Size = V{1000,100},
+    Position = V{-185,-97},
+    Font = Font.new("chexcore/assets/fonts/futura.ttf", 10, "mono"),
+    Update = function (self)
+        local new = "TIME: "..tostring(timeFormat(self.StartTime==0 and 0 or ((self.EndTime or Chexcore._clock)-self.StartTime))):sub(1,8)
+        
+        if self.EndTime and not self.EndTimeLastFrame then
+            self.FontSize = 12
+            self.EndTimeLastFrame = true
+        end
+        self.Text = new
+        
+        self.FontSize = math.lerp(self.FontSize, 10, 0.2)
+    end,
+
+    Start = function (self)
+        self.Waiting = false
+        self.StartTime = Chexcore._clock
     end
 })
 
@@ -520,7 +582,7 @@ local redoButton = scoreLayer:Adopt(Gui.new{
         transition:StartTransition()
         scoreboard:Undisplay()
 
-        Timer.Schedule(3.5, function()
+        Timer.Schedule(2.5, function()
             self:GetLayer():GetParent():Reload()
         end)
     end

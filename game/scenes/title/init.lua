@@ -261,7 +261,7 @@ local function reload(module_name)
 end
 
 function scene:Load(name)
-    Chexcore.UnmountScene(self)
+    Chexcore.UnmountScene(scene)
     local scene = reload("game.scenes."..name..".init")
     
     Chexcore.MountScene(scene)

@@ -125,7 +125,7 @@ end
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
 
-    if self.Health == 0 then
+    if self.PreventExplosionUntilStop and (self.Velocity == 0 or self.Health < 0) or (not self.PreventExplosionUntilStop and self.Health <= 0) then
         self:Pop()
         
     elseif self.Velocity > 0 then
@@ -192,8 +192,13 @@ function Bubble:Update(dt)
                 self.Position = bubble.Position + (n * 16)
     
                 self.Health = self.Health - 1
+                if self.Health == 0 then
+                    self.PreventExplosionUntilStop = true
+                end
                 bubble.Health = bubble.Health - 1
-    
+                if bubble.Health == 0 then
+                    bubble.PreventExplosionUntilStop = true
+                end
                 self.FramesSinceHit = 0
                 bubble.FramesSinceHit = 0
                 self:PlaySFX("Bump")
@@ -210,6 +215,8 @@ function Bubble:Update(dt)
             local collided = self:BallToWallCollision()
             if collided then break end
         end
+    else
+        self.PreventExplosionUntilStop = false
     end
 
     -- updating framevalues
@@ -257,7 +264,7 @@ function Bubble:Pop()
     for i, ball in ipairs(bubbles) do
         local vector = ball.Position - self.Position
         
-        if vector:Magnitude() < 32 then
+        if vector:Magnitude() < 64 then
             local vector1 = vector:Normalize() * (32 / vector:Magnitude())
             local vector2 = ball.Direction * ball.Velocity
             local n = vector:Normalize()
@@ -290,14 +297,20 @@ function Bubble:Pop()
     end)
 
     if self.Name == "Cue Ball" then
-        self:GetParent():EndLevel()
+        -- self:GetParent():EndLevel()
     end
+    local parent = self:GetParent()
     self:Emancipate()
+    local nonCueBubbles = parent:GetChildren()
 
-    local nonCueBubbles = self:GetParent():GetChildren()
-    if #nonCueBubbles == 1 and nonCueBubbles[1].Name == "Cue Ball" then
-        self:GetParent():EndLevel()
-    end
+    
+ 
+
+
+    -- if #nonCueBubbles == 0 or (#nonCueBubbles == 1 and nonCueBubbles[1].Name == "Cue Ball") then
+    --     self:GetParent():EndLevel()
+        
+    -- end
 
     
 end
@@ -422,7 +435,7 @@ function Bubble:BallToWallCollision()
     self.Tilemap = self.Tilemap or self:GetParent():GetParent():GetParent():GetChild("TilemapLayer"):GetChild("Tilemap")
     
     for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(self.Tilemap, true, false, true) do
-        
+        print(_)
         local surfaceInfo = self.Tilemap:GetSurfaceInfo(tileID)
 
 
@@ -448,6 +461,9 @@ function Bubble:BallToWallCollision()
         end
         self.Velocity = self.Velocity * 0.8
         self.Health = self.Health - 1
+        if self.Health == 0 then
+            self.PreventExplosionUntilStop = true
+        end
         self.FramesSinceHit = 0
         if self.Velocity <= 1.2 then
             self:PlaySFX("LightClink")

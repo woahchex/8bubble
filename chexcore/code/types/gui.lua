@@ -26,25 +26,28 @@ Gui._priorityGlobalUpdate = function ()
     Gui._usingMouse = false
 
     for guiElement, _ in pairs(Gui._hoverEvents) do
-        local newHoverStatus = isUnderMouse(guiElement)
+        if guiElement:GetLayer()._parent._mounted then
+            local newHoverStatus = isUnderMouse(guiElement)
 
-        if newHoverStatus ~= guiElement._isUnderMouse then
-            if newHoverStatus == true then -- hover entered
-                if guiElement.OnHoverStart then guiElement:OnHoverStart() end
-                if guiElement.OnHoverWhileSelected and next(guiElement._selectedBy) then
-                    for n in pairs(guiElement._selectedBy) do
-                        guiElement:OnHoverWhileSelected(n)
+            if newHoverStatus ~= guiElement._isUnderMouse then
+                if newHoverStatus == true then -- hover entered
+                    if guiElement.OnHoverStart then guiElement:OnHoverStart() end
+                    if guiElement.OnHoverWhileSelected and next(guiElement._selectedBy) then
+                        for n in pairs(guiElement._selectedBy) do
+                            guiElement:OnHoverWhileSelected(n)
+                        end
                     end
+                else                            -- hover exited
+                    if guiElement.OnHoverEnd then guiElement:OnHoverEnd() end
                 end
-            else                            -- hover exited
-                if guiElement.OnHoverEnd then guiElement:OnHoverEnd() end
+                guiElement._isUnderMouse = newHoverStatus
             end
-            guiElement._isUnderMouse = newHoverStatus
         end
+        
     end
 
     for guiElement, _ in pairs(Gui._selectEvents) do
-        if guiElement._isUnderMouse then
+        if guiElement._isUnderMouse and guiElement:GetLayer()._parent._mounted then
             guiElement._beingUsed = true
             Gui._usingMouse = true
 

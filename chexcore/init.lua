@@ -166,12 +166,14 @@ end
 
 function Chexcore.MountScene(scene)
     Chexcore._scenes[#Chexcore._scenes+1] = scene
+    scene._mounted = true
 end
 
 function Chexcore.UnmountScene(scene)
     for i = 1, #Chexcore._scenes do
         if Chexcore._scenes[i] == scene then
             table.remove(Chexcore._scenes, i)
+            scene._mounted = false
             return true
         end
     end
