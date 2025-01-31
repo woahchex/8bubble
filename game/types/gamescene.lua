@@ -16,6 +16,7 @@ function GameScene.new()
     local tilemapLayer = scene:AddLayer(Layer.new("TilemapLayer", 640, 360))
     local gameLayer = scene:AddLayer(Layer.new("Gameplay", 640, 360))
     local scoreLayer = scene:AddLayer(Layer.new("Score", 640, 360))
+    local transitionLayer = scene:AddLayer(Layer.new("Transition", 640, 360))
     
     tilemapLayer.Canvases[1].Shader = Shader.new("game/assets/shaders/1px-black-outline.glsl"):Send("step",V{1,1}/V{640,360}/2)
 

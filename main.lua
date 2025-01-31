@@ -11,6 +11,7 @@ function love.load()
     Chexcore:AddType("game.types.bubble")
     Chexcore:AddType("game.types.dirt")
     Chexcore:AddType("game.types.refill")
+    Chexcore:AddType("game.types.spinner")
 
     local scene = require("game.scenes.title.init")
     Chexcore.MountScene(scene)

@@ -9,14 +9,9 @@ local Dirt = {
     _global = true
 }
 
-
 function Dirt.new()
     local myObj = Dirt:SuperInstance()
     return Dirt:Connect(myObj)
-end
-
-function Dirt:Update(dt)
-    
 end
 
 function Dirt:Clean()
