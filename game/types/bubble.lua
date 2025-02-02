@@ -24,7 +24,6 @@ local Bubble = {
         [9] = Texture.new("game/assets/images/9.png"),
     },
     
-    
     Size = V{16, 16},
     Position = V{0, 0},
     Rotation = 0,
@@ -37,7 +36,6 @@ local Bubble = {
     _super = "Gui",      -- Supertype
     _global = true
 }
-
 
 function Bubble.new()
     local myObj = Bubble:SuperInstance()
@@ -84,15 +82,15 @@ function Bubble.new()
             Sound.new("game/assets/sounds/uke-05.wav", "static"):Set("Volume", 0.3),
             Sound.new("game/assets/sounds/uke-06.wav", "static"):Set("Volume", 0.3),
             Sound.new("game/assets/sounds/uke-07.wav", "static"):Set("Volume", 0.3),
-
         }
     }
 
     return Bubble:Connect(myObj)
 end
-    -- update position before velocity, so that there is at least 1 frame of whatever Velocity is set by prev frame
-    local MAX_Y_DIST = 1
-    local MAX_X_DIST = 1
+
+-- update position before velocity, so that there is at least 1 frame of whatever Velocity is set by prev frame
+local MAX_Y_DIST = 1
+local MAX_X_DIST = 1
     
 function Bubble:PlaySFX(name, pitch, variance, volume)
     pitch = pitch or 1
@@ -125,39 +123,40 @@ end
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
 
-    if self.PreventExplosionUntilStop and (self.Velocity == 0 or self.Health < 0) or (not self.PreventExplosionUntilStop and self.Health <= 0) then
+    if self.Health < 0 or (self.Velocity <= 0 and self.Health == 0) then
         self:Pop()
         
     elseif self.Velocity > 0 then
 
         if self.Velocity > 1.5 or
-            self.Velocity > 1 and math.random(3)==2 or
-            self.Velocity > 0.5 and math.random(8)==4 then
+            self.Velocity > 1 and math.random(3) == 2 or
+            self.Velocity > 0.5 and math.random(8) == 4 then
             self:GetLayer():GetChild("BubbleParticle"):Emit{
-                Position = self.Position+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
-                Size = V{1,1} * math.random(1,3),
-                SizeVelocity = V{-1,-1},
-                -- SizeAcceleration = V{-100,-100},
-                Velocity = V{0,0},
-                Acceleration = V{0,0},
-                -- ColorVelocity = V{0,0,0,-1},
+                Position = self.Position + V{0, 1} + V{math.random(-3, 3), math.random(-3, 3)},
+                Size = V{1, 1} * math.random(1, 3),
+                SizeVelocity = V{-1, -1},
+                Velocity = V{0, 0},
+                Acceleration = V{0, 0},
                 RotVelocity = 1,
-                Rotation = math.random(-1,1)/8,
-                AnchorPoint = V{0.5,0.5},
+                Rotation = math.random(-1, 1) / 8,
+                AnchorPoint = V{0.5, 0.5},
                 Duration = 0.6
             }
         end
+        
         self:BallToInteractableCollision()
+
+        local posDelta = self.Direction * self.Velocity
+        
         local subdivisions = 1
-        if math.abs(self.Velocity) > MAX_X_DIST then
-            subdivisions = math.floor(1+math.abs(self.Velocity)/MAX_X_DIST)
+        if math.abs(posDelta.X) > MAX_X_DIST then
+            subdivisions = math.floor(1 + math.abs(posDelta.X) / MAX_X_DIST)
         end
     
-        if math.abs(self.Velocity) > MAX_Y_DIST then
-            subdivisions = math.max(subdivisions, math.floor(1+math.abs(self.Velocity)/MAX_Y_DIST))
+        if math.abs(posDelta.Y) > MAX_Y_DIST then
+            subdivisions = math.max(subdivisions, math.floor(1 + math.abs(posDelta.Y) / MAX_Y_DIST))
         end
-        local posDelta = (self.Direction * self.Velocity)
-        
+
         self.Velocity = self.Velocity - self.DecelSpeed
         
         local collisions = {}
@@ -192,13 +191,8 @@ function Bubble:Update(dt)
                 self.Position = bubble.Position + (n * 16)
     
                 self.Health = self.Health - 1
-                if self.Health == 0 then
-                    self.PreventExplosionUntilStop = true
-                end
                 bubble.Health = bubble.Health - 1
-                if bubble.Health == 0 then
-                    bubble.PreventExplosionUntilStop = true
-                end
+
                 self.FramesSinceHit = 0
                 bubble.FramesSinceHit = 0
                 self:PlaySFX("Bump")
@@ -212,11 +206,10 @@ function Bubble:Update(dt)
                
                 break
             end
+            
             local collided = self:BallToWallCollision()
             if collided then break end
         end
-    else
-        self.PreventExplosionUntilStop = false
     end
 
     -- updating framevalues
@@ -226,33 +219,31 @@ end
 function Bubble:Pop()
     self:PlaySFX("Sink")
     self:PlaySFX("Pop", 0.5)
-    self:PlaySFX("Uke",1,0)
+    self:PlaySFX("Uke", 1, 0)
     self:PlaySFX("Explode", 3, 4)
+
     self:GetLayer():GetParent().ScreenShake = self:GetLayer():GetParent().ScreenShake + 4
     self:GetLayer():GetParent().Score = self:GetLayer():GetParent().Score + 100*(self.Health+1)
+    
     for i = 0, 330, 30 do
         self:GetLayer():GetChild("BubbleParticle"):Emit{
-            Position = self.Position,--+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
-            Size = V{1,1} * math.random(2,4),
-            SizeVelocity = V{-2,-2},
-            -- SizeAcceleration = V{-100,-100},
-            Velocity = Vector.FromAngle(math.rad(i))*10,
-            Acceleration = V{0,0},
-            -- ColorVelocity = V{0,0,0,-1},
+            Position = self.Position,
+            Size = V{1, 1} * math.random(2, 4),
+            SizeVelocity = V{-2, -2},
+            Velocity = Vector.FromAngle(math.rad(i)) * 10,
+            Acceleration = V{0, 0},
             RotVelocity = 1,
-            Rotation = math.random(-1,1)/8,
-            AnchorPoint = V{0.5,0.5},
+            Rotation = math.random(-1, 1) / 8,
+            AnchorPoint = V{0.5, 0.5},
             Duration = 0.6
         }
 
         self:GetLayer():GetChild("BubbleParticle"):Emit{
-            Position = self.Position,--+V{0,1}+V{math.random(-3,3),math.random(-3,3)},
+            Position = self.Position,
             Size = V{1,1} * math.random(2,4),
             SizeVelocity = V{-2,-2},
-            -- SizeAcceleration = V{-100,-100},
             Velocity = Vector.FromAngle(math.rad(i))*30,
             Acceleration = V{0,0},
-            -- ColorVelocity = V{0,0,0,-1},
             RotVelocity = 1,
             Rotation = math.random(-1,1)/8,
             AnchorPoint = V{0.5,0.5},
@@ -295,24 +286,10 @@ function Bubble:Pop()
     Timer.Schedule(0.3, function()
         pop:Emancipate()
     end)
-
-    if self.Name == "Cue Ball" then
-        -- self:GetParent():EndLevel()
-    end
+    
     local parent = self:GetParent()
     self:Emancipate()
-    local nonCueBubbles = parent:GetChildren()
-
-    
- 
-
-
-    -- if #nonCueBubbles == 0 or (#nonCueBubbles == 1 and nonCueBubbles[1].Name == "Cue Ball") then
-    --     self:GetParent():EndLevel()
-        
-    -- end
-
-    
+    parent:CheckEnd()
 end
 
 local lg, floor = love.graphics, math.floor
@@ -435,16 +412,9 @@ function Bubble:BallToWallCollision()
     self.Tilemap = self.Tilemap or self:GetParent():GetParent():GetParent():GetChild("TilemapLayer"):GetChild("Tilemap")
     
     for _, hDist, vDist, tileID, tileNo, tileLayer in self:CollisionPass(self.Tilemap, true, false, true) do
-        print(_)
+        -- print(_)
         local surfaceInfo = self.Tilemap:GetSurfaceInfo(tileID)
-
-
-
         local face = Prop.GetHitFace(hDist,vDist)
-
-
-        
-
 
         -- hDist is # pixels horizontally inside the tile the bubble is (pos=wall on left, neg=wall on right)
         -- vDist is # pixels vertically inside the tile the bubble is (pos=wall on top, neg=wall on bottom)
@@ -461,9 +431,6 @@ function Bubble:BallToWallCollision()
         end
         self.Velocity = self.Velocity * 0.8
         self.Health = self.Health - 1
-        if self.Health == 0 then
-            self.PreventExplosionUntilStop = true
-        end
         self.FramesSinceHit = 0
         if self.Velocity <= 1.2 then
             self:PlaySFX("LightClink")
@@ -474,6 +441,7 @@ function Bubble:BallToWallCollision()
         if (surfaceInfo["Bottom"] or {}).Spikes or (surfaceInfo["Right"] or {}).Spikes or (surfaceInfo["Top"] or {}).Spikes or (surfaceInfo["Left"] or {}).Spikes then
             self:Pop()
         end
+        
         return true
         -- self.Position = self.Position - V{hDist, vDist}
     end
@@ -481,7 +449,6 @@ end
 
 function Bubble:BallToDirtCollision()
     local dirt = self:GetParent():GetParent():GetChild("Dirt"):GetChildren()
-    print("Checking Dirt")
     
     for stain, hDist, vDist, tileID in self:CollisionPass(dirt) do
         self:GetLayer():GetParent().Score = self:GetLayer():GetParent().Score + 100 * (self.Health+1)
@@ -492,29 +459,26 @@ end
 function Bubble:BallToInteractableCollision()
     local interactables = self:GetParent():GetParent():GetChild("Interactables"):GetChildren()
     
-    for stain, hDist, vDist, tileID in self:CollisionPass(interactables) do
-        if stain:IsA("Refill") then
+    for interactable, hDist, vDist, tileID in self:CollisionPass(interactables) do
+        if interactable:IsA("Refill") then
+            interactable:Emancipate()
             self:PlaySFX("Refill", 1, 3)
-            stain:Emancipate()
-            self.Health = math.min(self.Health+1, 9) 
+            self.Health = math.min(self.Health + 1, 9)
             self.DrawScale = V{1.2,1.2}
-
             
             self:GetLayer():GetChild("PlusOne"):Emit{
-                Position = self.Position + V{8,-8},
-                Size = V{12,12},
-                SizeVelocity = V{20,20},
-                SizeAcceleration = V{-100,-100},
-                Velocity = V{0,-20,0},
-                Acceleration = V{0,60,0},
-                ColorVelocity = V{0,0,0,-1},
+                Position = self.Position + V{8, -8},
+                Size = V{12, 12},
+                SizeVelocity = V{20, 20},
+                SizeAcceleration = V{-100, -100},
+                Velocity = V{0, -20, 0},
+                Acceleration = V{0, 60, 0},
+                ColorVelocity = V{0, 0, 0, -1},
                 RotVelocity = 1,
-                Rotation = math.random(-1,1)/8,
-                AnchorPoint = V{0.5,0.5},
+                Rotation = math.random(-1, 1) / 8,
+                AnchorPoint = V{0.5, 0.5},
                 Duration = 0.5
             }
-            
-
         end
     end
 end

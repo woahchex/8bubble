@@ -11,7 +11,6 @@ local Refill = {
     _global = true
 }
 
-
 function Refill.new()
     local refill = Refill:SuperInstance()
     refill.Size = V{16,16}

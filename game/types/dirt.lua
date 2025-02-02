@@ -1,4 +1,3 @@
-local CANVAS_SIZE = V{32,32}
 local Dirt = {
     -- properties
     Name = "Dirt",        -- Easy identifier

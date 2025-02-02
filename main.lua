@@ -12,11 +12,12 @@ function love.load()
     Chexcore:AddType("game.types.dirt")
     Chexcore:AddType("game.types.refill")
     Chexcore:AddType("game.types.spinner")
+    Chexcore:AddType("game.types.scorebutton")
 
     local scene = require("game.scenes.title.init")
     Chexcore.MountScene(scene)
 
-    _G.highScores = _G.highScores or {0,0,0,0,0}
+    _G.highScores = _G.highScores or {0, 0, 0, 0, 0}
 
     -- print(player:ToString(true))
     -- You can unmount (or deactivate) a scene by using Chexcore.UnmountScene(scene)

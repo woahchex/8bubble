@@ -7,11 +7,25 @@ scene.Name = "debug"
 scene.Score = 0
 
 -- background
-local gameLayer = scene:GetLayer("Gameplay")
 local tilemapLayer = scene:GetLayer("TilemapLayer")
+local gameLayer = scene:GetLayer("Gameplay")
 local scoreLayer = scene:GetLayer("Score")
+local transitionLayer = scene:GetLayer("Transition")
 
 local timeText
+local cuePosition
+local cueStick
+local cueGuide
+local scoreboard
+local transition
+local screenCover
+
+--- level layout
+tilemapLayer:Adopt(Tilemap.import(_G.tilemap,"game/assets/images/tilemap.png")):Properties{
+    AnchorPoint = V{0.5, 0.5}
+}
+
+--- particles
 Particles.new{
     Name = "BubbleParticle",
     AnchorPoint = V{0.5, 0.5},
@@ -26,73 +40,6 @@ Particles.new{
     ParticleColor = V{1,1,1,1},
     ParticleTexture = Texture.new("game/scenes/title/sphere.png"),
 }:Nest(gameLayer)
-
-local cueStick
-local scoreboard
-local transition
-
-local balls = gameLayer:Adopt(Prop.new{
-    Name = "Balls",
-    Visible = false,
-    BallsMoving = 0,
-    CheckEnd = false,
-    LevelEnd = false,
-
-    Update = function(self)
-        local children = self:GetChildren()
-        if not self:GetChild("Cue Ball") then
-            cueStick:Disable()
-            local stop = true
-            
-            for i, b in ipairs(children) do
-                if b.Velocity > 0.05 then
-                    stop = false
-                    break
-                end
-            end
-            
-            if stop then
-                self:EndLevel()
-            end
-        elseif #children==1 and children[1].Name == "Cue Ball" then
-            self:EndLevel()
-        end
-
-        local bubbles = self:GetChildren()
-
-        local numBalls = 0
-        for i, ball in ipairs(bubbles) do
-            if ball.Velocity > 0 then
-                numBalls = numBalls + 1
-            end
-        end
-
-        self.BallsMoving = numBalls
-
-        if self.CheckEnd and self.BallsMoving == 0 then
-            self.CheckEnd = false
-            self.LevelEnd = true
-
-            cueStick:Disable()
-            scoreboard:Display()
-        end
-    end,
-
-    EndLevel = function(self)
-        self.CheckEnd = true
-        timeText.EndTime = Chexcore._clock
-    end
-})
-
-local dirt = gameLayer:Adopt(Prop.new{
-    Name = "Dirt",
-    Visible = false
-})
-
-local interactables = gameLayer:Adopt(Prop.new{
-    Name = "Interactables",
-    Visible = false
-})
 
 Particles.new{
     Name = "PlusOne",
@@ -109,58 +56,113 @@ Particles.new{
     ParticleTexture = Texture.new("game/assets/images/plusone.png"),
 }:Nest(gameLayer)
 
+local balls = gameLayer:Adopt(Prop.new{
+    Name = "Balls",
+    Visible = false,
+    BallsMoving = 0,
+    WaitForEnd = false,
+    LevelEnd = false,
+
+    Update = function(self)
+        local numBalls = 0
+        for i, ball in ipairs(self:GetChildren()) do
+            if ball.Velocity > 0 or ball.Health == 0 then
+                numBalls = numBalls + 1
+            end
+        end
+
+        self.BallsMoving = numBalls
+
+        if self.WaitForEnd and self.BallsMoving == 0 then
+            self.WaitForEnd = false
+            self.LevelEnd = true
+
+            cuePosition:Disable()
+            scoreboard:Display()
+            timeText:Stop()
+        end
+    end,
+
+    CheckEnd = function(self)
+        if not self:GetChild("Cue Bubble") or not self:GetChild("Bubble") then
+            self.WaitForEnd = true
+        end
+    end,
+})
+
+local dirt = gameLayer:Adopt(Prop.new{
+    Name = "Dirt",
+    Visible = false
+})
+
+local interactables = gameLayer:Adopt(Prop.new{
+    Name = "Interactables",
+    Visible = false
+})
+
 local cueBubble = balls:Adopt(Bubble.new():Properties{
-    Name = "Cue Ball",
+    Name = "Cue Bubble",
     Size = V{16,16},
     AnchorPoint = V{0.5,0.5},
     Position = V{-20, 30},
     Direction = V{0, 0},
     Velocity = 0,
-    PreventExplosionUntilStop = false,
-    Shader = Shader.new("game/assets/shaders/1px-black-outline.glsl"):Send("step", V{1,1}/V{32,32}*2),
+    Shader = Shader.new("game/assets/shaders/1px-black-outline.glsl"):Send("step", V{1, 1} / V{32, 32} * 2),
 
     HitBubble = function(self)
         self:PlaySFX("Serve")
-        timeText.StartTime = Chexcore._clock
+        timeText:Start()
         
         self.Health = self.Health - 1
-        if self.Health == 0 then self.PreventExplosionUntilStop = true end
-        self.Velocity = cueStick.Power
-        self.Direction = (self.Position - cueStick.Position):Normalize()
+        self.Velocity = cuePosition.Power
+        self.Direction = (self.Position - cuePosition.Position):Normalize()
         self.FramesSinceHit = 0
     end,
 })
 
-local cueGuide
-local visibleCueStick
-cueStick = gameLayer:Adopt(Gui.new{
-    Name = "Cue Stick",
-    Size = V{10, 40},
-    AnchorPoint = V{0.5, 0},
-    Position = V{0, 30},
+local ballSpawns = tilemapLayer:GetChildren()[1]:GetChildren()[1]:GetChildren()
+for _, spawn in ipairs(ballSpawns) do
+    if spawn.Name == "Refill" then
+        interactables:Adopt(Refill.new():Properties{
+            Position = spawn.Position - V{390, 235},
+        })
+    elseif spawn.Name ~= "CueBubble" then
+        balls:Adopt(Bubble.new():Properties{
+            Name = "Bubble",
+            Size = V{16, 16},
+            AnchorPoint = V{0.5, 0.5},
+            Position = spawn.Position - V{390, 235},
+            Health = spawn.Health
+        })
+    else
+        cueBubble.Position = spawn.Position - V{390, 235}
+        cueBubble.Health = spawn.Health
+    end
+end
+
+cuePosition = gameLayer:Adopt(Gui.new{
+    Name = "Cue Position",
+    Position = cueBubble.Position,
+    Power = 0,
+    AngleStep = math.pi / 32,
+    PowerStep = 20,
     Visible = false,
     Active = false,
     Enabled = false,
-    Division = (math.pi / 144*2),
-    Power = 0,
-    Increment = 20,
     
     Update = function(self)
-        local mouseAngle = (gameLayer:GetMousePosition() - cueBubble.Position)
-        local mouseDistance = math.max(self.Increment, math.min(mouseAngle:Magnitude(), self.Increment * 4))
+        local angle = gameLayer:GetMousePosition() - cueBubble.Position
+        local cueAngle = math.round(-angle:ToAngle() / self.AngleStep) * self.AngleStep
+        local cueDistance = math.max(self.PowerStep, math.min(angle:Magnitude(), self.PowerStep * 4))
 
-        local angle = math.round(-mouseAngle:ToAngle() / self.Division) * self.Division
-        self.Power = math.floor(mouseDistance / self.Increment)
-
-        self.Rotation = angle
-        self.Position = cueBubble.Position + Vector.FromAngle(angle + (math.pi / 2)) * (self.Power * self.Increment)
-
+        self.Power = math.floor(cueDistance / self.PowerStep)
+        self.Rotation = cueAngle
+        self.Position = cueBubble.Position + Vector.FromAngle(cueAngle + (math.pi / 2)) * (self.Power * self.PowerStep)
         
-
-        if self.Enabled then
-            -- self.Visible = true
-            visibleCueStick.GoalColor = V{1,1,1,1}
-            -- self.Enabled = false
+        if self.Enabled and balls.BallsMoving == 0 then
+            cueStick.GoalColor = V{1, 1, 1, 1}
+            cueStick.Position = cueBubble.Position
+            self.Enabled = false
         end
     end,
 
@@ -170,152 +172,89 @@ cueStick = gameLayer:Adopt(Gui.new{
     end,
 
     Disable = function(self)
-        -- self.Visible = false
-        visibleCueStick.GoalColor = V{1,1,1,0}
         self.Active = false
         self.Enabled = false
-    end
+        self.Position = cueBubble.Position
+        cueStick.GoalColor = V{1, 1, 1, 0}
+    end,
 })
 
-visibleCueStick = gameLayer:Adopt(Gui.new{
-    Name = "VisibleCue",
+cueStick = gameLayer:Adopt(Gui.new{
+    Name = "Cue Stick",
+    Size = V{12, 50},
+    Position = cueBubble.Position,
+    AnchorPoint = V{0.5, 0},
+    Color = V{1, 1, 1, 0},
+    GoalColor = V{1, 1, 1, 0},
     Texture = Texture.new("game/scenes/title/cue-stick.png"),
-    Size = V{12,50},
-    GoalColor = V{1,1,1,1},
-    AnchorPoint = V{0.5,0},
+    Retreat = false,
+    RetreatPos = V{0, 0},
+    
     Update = function (self)
+        local targetPos = self.Retreat and self.RetreatPos or cuePosition.Position
         
-        self.Position = self.Position:Lerp(cueStick.Position, 0.5)
+        self.Position = self.Position:Lerp(targetPos, 0.2)
+        self.Rotation = math.lerp(self.Rotation, cuePosition.Rotation, 1)
         self.Color = self.Color:Lerp(self.GoalColor, 0.2)
-        self.Rotation = math.lerp(self.Rotation, cueStick.Rotation, 1)
-    end
+    end,
 })
 
 cueGuide = scene:GetLayer("BG"):Adopt(Gui.new{
     Name = "CueGuide",
-    Texture = Animation.new("game/scenes/title/cue-guide.png",1,8),
-    Size = V{2,512},
-    GoalColor = V{1,1,1,1},
-    AnchorPoint = V{0.5,1},
-    Color = V{1,1,1,1},
+    Size = V{2, 512},
+    AnchorPoint = V{0.5, 1},
+    Color = V{1, 1, 1, 1},
+    GoalColor = V{1, 1, 1, 1},
+    Texture = Animation.new("game/scenes/title/cue-guide.png", 1, 8),
+    
     Update = function (self)
-        self.Position = visibleCueStick.Position
-        self.Rotation = visibleCueStick.Rotation
-        self.Color[4] = visibleCueStick.Color[4]/2
+        self.Position = cueStick.Position
+        self.Rotation = cueStick.Rotation
+        self.Color[4] = cueStick.Color[4]/2
     end
 })
 
-local cueBallEnterRadius = gameLayer:Adopt(Gui.new{
-    Name = "Enter Radius",
-    Size = V{1, 1} * ((cueStick.Increment * 10) + 40),
-    AnchorPoint = V{0.5, 0.5},
+local cueStickRadius = gameLayer:Adopt(Gui.new{
+    Name = "Cue Stick Radius",
+    Size = V{1, 1} * ((cuePosition.PowerStep * 10) + 60),
     Position = cueBubble.Position,
-    Visible = false,
-
-    Update = function(self)
-        self.Position = cueBubble.Position
-    end,
-
-    OnHoverStart = function(self)
-        if not balls.LevelEnd then
-            cueStick:Enable()
-        end
-    end,
-
-    OnHoverEnd = function (self)
-        cueStick:Disable()
-    end
-})
-
-local cueBallExitRadius = gameLayer:Adopt(Gui.new{
-    Name = "Exit Radius",
-    Size = V{1, 1} * ((cueStick.Increment * 10) + 80),
     AnchorPoint = V{0.5, 0.5},
-    Position = cueBubble.Position,
     Visible = false,
-    BallsMoving = false,
 
     Update = function(self)
         self.Position = cueBubble.Position
     end,
 
     OnSelectStart = function(self)
-        if cueStick.Active then
+        if not balls.LevelEnd and balls.BallsMoving == 0 then
             cueBubble:HitBubble()
-            -- cueStick:Disable()
-            visibleCueStick.Position = cueBubble.Position
+            cuePosition:Disable()
+            
+            cueStick.RetreatPos = cueStick.Position
+            cueStick.Position = cueBubble.Position
+            cueStick.Retreat = true
+
+            self.Size = V{0, 0}
+        end
+    end,
+
+    OnHoverStart = function(self)
+        if not (cuePosition.Active or balls.LevelEnd) then
+            cuePosition:Enable()
+
+            cueStick.Position = cueBubble.Position
+            cueStick.Retreat = false
         end
     end,
 
     OnHoverEnd = function(self)
+        cuePosition:Disable()
         
+        self.Size = V{1, 1} * ((cuePosition.PowerStep * 10) + 60)
     end
 })
 
--- local bubble1 = balls:Adopt(Bubble.new():Properties{
---     Name = "Test",
---     Size = V{16,16},
---     AnchorPoint = V{0.5,0.5},
---     Position = V{60, 30},
--- })
-
--- local bubble2 = balls:Adopt(Bubble.new():Properties{
---     Name = "Test1",
---     Size = V{16,16},
---     AnchorPoint = V{0.5,0.5},
---     Position = V{60, 10},
--- })
-
--- local bubble3 = balls:Adopt(Bubble.new():Properties{
---     Name = "Test2",
---     Size = V{16,16},
---     AnchorPoint = V{0.5,0.5},
---     Position = V{20, 30},
--- })
-
--- local bubble4 = balls:Adopt(Bubble.new():Properties{
---     Name = "Test3",
---     Size = V{16,16},
---     AnchorPoint = V{0.5,0.5},
---     Position = V{40, 30},
--- })
-
--- local bubble5 = balls:Adopt(Bubble.new():Properties{
---     Name = "Test4",
---     Size = V{16,16},
---     AnchorPoint = V{0.5,0.5},
---     Position = V{0, 30},
--- })
-
-tilemapLayer:Adopt(Tilemap.import(_G.tilemap,"game/assets/images/tilemap.png")):Properties{
-    AnchorPoint = V{0.5,0.5}
-}
-
-local ballSpawns = tilemapLayer:GetChildren()[1]:GetChildren()[1]:GetChildren()
-
-for _, spawn in ipairs(ballSpawns) do
-    if spawn.Name == "Refill" then
-        
-        interactables:Adopt(Refill.new():Properties{
-            Position = spawn.Position - V{390, 235},
-        })
-    elseif spawn.Name ~= "CueBubble" then
-        local bubble = balls:Adopt(Bubble.new():Properties{
-            Name = "Test",
-            Size = V{16,16},
-            AnchorPoint = V{0.5,0.5},
-            Position = spawn.Position - V{390, 235},
-            Health = spawn.Health
-        })
-    else
-        cueBubble.Position = spawn.Position- V{390, 235}
-        cueBubble.Health = spawn.Health
-    end
-    
-    
-end
-
-local function timeFormat(seconds)
+local function formatTime(seconds)
     local minutes = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
     local millis = math.floor((seconds % 1) * 1000)
@@ -341,32 +280,28 @@ local scoreText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
         self.FontSize = math.lerp(self.FontSize, 10, 0.2)
     end
 })
+
 timeText = scene:GetLayer("TilemapLayer"):Adopt(Text.new{
     Name = "Time",
-    Text = "TIME: 00:00:00",
-    StartTime = 0,
-    EndTime = nil,
-    Status = "Waiting",
-    FontSize = 10,
-    TextColor = V{1,1,1},
     Size = V{1000,100},
     Position = V{-185,-97},
+    Text = "TIME: 00:00:00",
     Font = Font.new("chexcore/assets/fonts/futura.ttf", 10, "mono"),
-    Update = function (self)
-        local new = "TIME: "..tostring(timeFormat(self.StartTime==0 and 0 or ((self.EndTime or Chexcore._clock)-self.StartTime))):sub(1,8)
-        
-        if self.EndTime and not self.EndTimeLastFrame then
-            self.FontSize = 12
-            self.EndTimeLastFrame = true
-        end
-        self.Text = new
-        
+    FontSize = 10,
+    TextColor = V{1,1,1},
+
+    Update = function(self)
+        self.Text = "TIME: "..tostring(formatTime((self.EndTime or Chexcore._clock) - (self.StartTime or Chexcore._clock))):sub(1, 8)
         self.FontSize = math.lerp(self.FontSize, 10, 0.2)
     end,
 
-    Start = function (self)
-        self.Waiting = false
-        self.StartTime = Chexcore._clock
+    Start = function(self)
+        self.StartTime = self.StartTime or Chexcore._clock
+    end,
+
+    Stop = function(self)
+        self.EndTime = Chexcore._clock
+        self.FontSize = 12
     end
 })
 
@@ -375,18 +310,9 @@ local dirt1 = dirt:Adopt(Dirt.new():Properties{
     Size = V{16,48},
     Color = V{1,1,1},--Vector.Hex"59a4ff",
     Texture = Texture.new("game/scenes/title/dirt-right1.png"),
-    DrawInForeground = true
 })
 
-
--- interactables
--- local refill1 = interactables:Adopt(Refill.new():Properties{
-
--- })
-
-
 -- level end screen
-local shape4
 
 scoreboard = scoreLayer:Adopt(Gui.new{
     Name = "Scoreboard",
@@ -394,75 +320,35 @@ scoreboard = scoreLayer:Adopt(Gui.new{
     Position = V{0, 350},
     AnchorPoint = V{0.5, 0.5},
     Texture = Texture.new("game/assets/images/scoreboard.png"),
-    Idle = false,
-    Visible = true,
     Active = false,
     
     Update = function(self)
-        if self.Idle then
-            self.Position = self.Position:Lerp(V{0, 0 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: math.sin(Chexcore._clock) * 2
-        else
-            self.Position = self.Position:Lerp(V{0, 350}, 0.1)
-
-            if (V{0, 350} - self.Position):Magnitude() < 0.1 then
-                self.Visible = false
-                self.Active = false
-            end
-        end
+        self.Position = self.Position:Lerp(V{0, 0 + (math.sin(Chexcore._clock) * 2)}, 0.1)
     end,
 
     Display = function(self)
-        self.Idle = true
-
-        self.Visible = true
         self.Active = true
 
-        local elements = self:GetParent():GetChildren()
-        for i, element in ipairs(elements) do
-            if element ~= self and element.Name ~= "Transition" then
-                element:Display()
-                print(element.Name)
-            end
+        local elements = self:GetChildren()
+        for _, element in ipairs(elements) do
+            element:Display()
         end
     end,
-
-    Undisplay = function(self)
-        self.Idle = false
-
-        local elements = self:GetParent():GetChildren()
-        for i, element in ipairs(elements) do
-            print(element.Name)
-            if element ~= self and element.Name ~= "Shape" and element.Name ~= "Transition" then
-                element:Undisplay()
-            end
-        end
-    end
-        
 })
 
-local scoreText = scoreLayer:Adopt(Text.new{
-    Name = "Score",
-    Text = "HIGH SCORE: ",
-    FontSize = 24,
-    TextColor = V{1,1,1},
-    Size = V{300,100},
-    Position = V{0, 0},
+local finalScore = scoreboard:Adopt(Text.new{
+    Name = "High Score",
+    Size = V{1000, 100},
+    Position = V{0, 350},
     AnchorPoint = V{0.5, 0.5},
-    AlignMode = "center",
+    TextColor = V{1, 1, 1},
     Font = Font.new("chexcore/assets/fonts/futura.ttf", 24, "mono"),
-    DrawInForeground = true,
+    FontSize = 24,
+    AlignMode = "center",
+    Active = false,
 
-    Update = function (self)
-        if self.Idle then
-            self.Position = self.Position:Lerp(V{0, 0 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: math.sin(Chexcore._clock) * 2
-        else
-            self.Position = self.Position:Lerp(V{0, 350}, 0.1)
-
-            if (V{0, 350} - self.Position):Magnitude() < 0.1 then
-                self.Visible = false
-                self.Active = false
-            end
-        end
+    Update = function(self)
+        self.Position = self.Position:Lerp(V{0, 0 + (math.sin(Chexcore._clock) * 2)}, 0.1)
     end,
 
     Display = function(self)
@@ -470,270 +356,92 @@ local scoreText = scoreLayer:Adopt(Text.new{
             _G.highScores[levelNum] = scene.Score
         end
 
-        self.Text = "HIGH SCORE:\n"..tostring(_G.highScores[levelNum])
-        self.Idle = true
-
-        self.Visible = true
+        self.Text = "HIGH SCORE: "..tostring(_G.highScores[levelNum])
         self.Active = true
-    end,
-
-    Undisplay = function(self)
-        self.Idle = false
     end
 })
 
-local playButton = scoreLayer:Adopt(Gui.new{
-    Name = "Button",
-    Size = V{24, 24},
-    Position = V{60, 400},
-    AnchorPoint = V{0.5, 0.5},
+local nextButton = scoreboard:Adopt(ScoreButton.new():Properties{
+    Name = "Next",
+    Position = V{30, 400},
     Texture = Texture.new("game/scenes/title/play-button.png"),
-    Idle = false,
-    Visible = false,
-    Active = false,
-    
-    Update = function(self)
-        if self.Idle then
-            self.Position = self.Position:Lerp(V{60, 50 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: 
-        else
-            self.Position = self.Position:Lerp(V{60, 400}, 0.1)
 
-            if (V{60, 400} - self.Position):Magnitude() < 0.1 then
-                self.Visible = false
-                self.Active = false
-            end
-        end
+    OnSelectStart = function(self)
+        self.Size = V{20, 20}
+        transition:StartTransition()
+
+        Timer.Schedule(2.5, function()
+            _G.CurLevel = _G.CurLevel+1
+            _G.tilemap = "game.assets.tilemaps.".._G.LEVELS[_G.CurLevel]
+
+            self:GetLayer():GetParent():Reload()
+        end)
     end,
 
     Display = function(self)
-        self.Idle = true
-
         local win = true
         local bubbles = balls:GetChildren()
-        for i, ball in ipairs(bubbles) do
-            if ball.Name ~= "Cue Ball" then
+
+        for _, ball in ipairs(bubbles) do
+            if ball.Name ~= "Cue Bubble" then
                 win = false
             end
         end
 
-        if win then
-            self.Visible = true
-            self.Active = true
-        end
-
-        if _G.CurLevel == 5 then
-            self.Active = false
-            self.Visible = false
-        end
-    end,
-
-    Undisplay = function(self)
-        self.Idle = false
-    end,
-
-    OnSelectStart = function(self)
-        transition:StartTransition()
-        scoreboard:Undisplay()
-
-        Timer.Schedule(2.5, function()
-            -- Insert code to load new level
-            _G.CurLevel = _G.CurLevel+1
-            _G.tilemap = "game.assets.tilemaps.".._G.LEVELS[_G.CurLevel]
-            self:GetLayer():GetParent():Reload()
-        end)
+        self.Active = win
     end
 })
 
-local redoButton = scoreLayer:Adopt(Gui.new{
-    Name = "Button",
-    Size = V{24, 24},
-    Position = V{-60, 400},
-    AnchorPoint = V{0.5, 0.5},
+local redoButton = scoreboard:Adopt(ScoreButton.new():Properties{
+    Name = "Redo",
+    Position = V{-30, 400},
     Texture = Texture.new("game/scenes/title/redo-button.png"),
-    Idle = false,
-    Visible = false,
-    Active = false,
-    
-    Update = function(self)
-        if self.Idle then
-            self.Position = self.Position:Lerp(V{-60, 50 + (math.sin(Chexcore._clock) * 2)}, 0.1) -- y: 
-        else
-            self.Position = self.Position:Lerp(V{-60, 400}, 0.1)
 
-            if (V{-60, 400} - self.Position):Magnitude() < 0.1 then
-                self.Visible = false
-                self.Active = false
-            end
-        end
+    OnSelectStart = function(self)
+        self.Size = V{20, 20}
+        transition:StartTransition()
+
+        Timer.Schedule(2.5, function()
+            self:GetLayer():GetParent():Reload()
+        end)
     end,
 
     Display = function(self)
-        self.Idle = true
-
-        self.Visible = true
         self.Active = true
-    end,
-
-    Undisplay = function(self)
-        self.Idle = false
-    end,
-
-    OnSelectStart = function(self)
-        transition:StartTransition()
-        scoreboard:Undisplay()
-
-        Timer.Schedule(2.5, function()
-            self:GetLayer():GetParent():Reload()
-        end)
     end
 })
 
-transition = scoreLayer:Adopt(Prop.new{
+local colors = {"5f82f8", "59a4ff", "fffba6"}
+transition = transitionLayer:Adopt(Prop.new{
     Name = "Transition",
     Visible = false,
 
     StartTransition = function(self)
-        local shapes = self:GetChildren()
-
         local delay = 0.2
-
-        for i, shape in ipairs(shapes)do
+        for i, color in ipairs(colors) do
             Timer.Schedule(i * delay, function()
                 local goalSize = V{1, 1} * ((3 / i) * 285)
                 local rotSpeed = ((math.random(0, 1) * 2) -1) * (math.random() + 2)
 
-                shape:Start(goalSize, rotSpeed)
+                transition:Adopt(Spinner.new():Properties{
+                    Color = Vector.Hex(color)
+                }):Start(goalSize, rotSpeed, 0.05)
             end)
-
-            if i == 3 then
-                delay = 0.4
-            end
         end
+
+        Timer.Schedule(1.5, function()
+            screenCover:Start(V{860, 860}, 2, 0.04)
+        end)
     end
 })
 
-local shape1 = transition:Adopt(Gui.new{
-    Name = "Shape",
-    Texture = Texture.new("game/scenes/title/septagon.png"),
-    Color = Vector.Hex"5f82f8",
-    Size = V{0, 0},
-    GoalSize = V{0, 0},
-    LerpSpeed = 0,
-    Position = V{0, 0},
-    AnchorPoint = V{0.5, 0.5},
-    RotationSpeed = 0,
-    DrawInForeground = true,
-    Idle = true,
-
-    Update = function(self)
-        if not self.Idle then
-            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
-            self.Rotation = Chexcore._clock * self.RotationSpeed
-        end
-    end,
-
-    Start = function(self, goalSize, rotSpeed)
-        self.GoalSize = goalSize
-        self.RotationSpeed = rotSpeed
-        self.LerpSpeed = 0.05
-
-        self.Idle = false
-    end,
-})
-
-local shape2 = transition:Adopt(Gui.new{
-    Name = "Shape",
-    Texture = Texture.new("game/scenes/title/septagon.png"),
-    Color = Vector.Hex"59a4ff",
-    Size = V{0, 0},
-    GoalSize = V{0, 0},
-    LerpSpeed = 0,
-    Position = V{0, 0},
-    AnchorPoint = V{0.5, 0.5},
-    RotationSpeed = 0,
-    DrawInForeground = true,
-    Idle = true,
-
-    Update = function(self)
-        if not self.Idle then
-            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
-            self.Rotation = Chexcore._clock * self.RotationSpeed
-        end
-    end,
-
-    Start = function(self, goalSize, rotSpeed)
-        self.GoalSize = goalSize
-        self.RotationSpeed = rotSpeed
-        self.LerpSpeed = 0.05
-
-        self.Idle = false
-    end,
-})
-
-local shape3 = transition:Adopt(Gui.new{
-    Name = "Shape",
-    Texture = Texture.new("game/scenes/title/septagon.png"),
-    Color = Vector.Hex"fffba6",
-    Size = V{0, 0},
-    GoalSize = V{0, 0},
-    LerpSpeed = 0,
-    Position = V{0, 0},
-    AnchorPoint = V{0.5, 0.5},
-    RotationSpeed = 0,
-    DrawInForeground = true,
-    Idle = true,
-
-    Update = function(self)
-        if not self.Idle then
-            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
-            self.Rotation = Chexcore._clock * self.RotationSpeed
-        end
-    end,
-
-    Start = function(self, goalSize, rotSpeed)
-        self.GoalSize = goalSize
-        self.RotationSpeed = rotSpeed
-        self.LerpSpeed = 0.05
-
-        self.Idle = false
-    end,
-})
-
-shape4 = transition:Adopt(Gui.new{
-    Name = "Shape",
-    Texture = Texture.new("game/scenes/title/septagon.png"),
+screenCover = transition:Adopt(Spinner.new():Properties{
     Color = Vector.Hex"000000",
-    Size = V{1, 1} * 860,
-    GoalSize = V{0, 0},
+    Size = V{860, 860},
     LerpSpeed = 0.08,
-    Position = V{0, 0},
-    AnchorPoint = V{0.5, 0.5},
-    RotationSpeed = 2,
-    DrawInForeground = true,
-    State = "Shrink",
-
-    Update = function(self)
-        if self.State ~= "Idle" then
-            self.Size = self.Size:Lerp(self.GoalSize, self.LerpSpeed)
-            self.Rotation = Chexcore._clock * self.RotationSpeed
-
-            if self.State == "Shrink" and (self.GoalSize - self.Size):Magnitude() < 0.5 then
-                self:Stop()
-            end
-        end
-    end,
-
-    Start = function(self, goalSize, rotSpeed)
-        self.State = "Grow"
-
-        self.GoalSize = V{1, 1} * 860
-        self.LerpSpeed = 0.04
-        self.Function = toCall
-    end,
-
-    Stop = function(self)
-        self.State = "Idle"
-    end
+    RotationSpeed = 4,
+    Idle = false,
+    DrawInForeground = true
 })
 
 return scene
