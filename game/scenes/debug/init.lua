@@ -66,7 +66,7 @@ local balls = gameLayer:Adopt(Prop.new{
     Update = function(self)
         local numBalls = 0
         for i, ball in ipairs(self:GetChildren()) do
-            if ball.Velocity > 0 or ball.Health == 0 then
+            if ball.Speed > 0 or ball.Health == 0 then
                 numBalls = numBalls + 1
             end
         end
@@ -106,7 +106,7 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
     AnchorPoint = V{0.5,0.5},
     Position = V{-20, 30},
     Direction = V{0, 0},
-    Velocity = 0,
+    Speed = 0,
     Shader = Shader.new("game/assets/shaders/1px-black-outline.glsl"):Send("step", V{1, 1} / V{32, 32} * 2),
 
     HitBubble = function(self)
@@ -114,7 +114,7 @@ local cueBubble = balls:Adopt(Bubble.new():Properties{
         timeText:Start()
         
         self.Health = self.Health - 1
-        self.Velocity = cuePosition.Power
+        self.Speed = cuePosition.Power
         self.Direction = (self.Position - cuePosition.Position):Normalize()
         self.FramesSinceHit = 0
     end,

@@ -28,7 +28,7 @@ local Bubble = {
     Position = V{0, 0},
     Rotation = 0,
     Direction = V{0, 0},
-    Velocity = 0,
+    Speed = 0,
     Threshold = 16,
     DecelSpeed = 0.015,
 
@@ -122,15 +122,16 @@ end
 
 function Bubble:Update(dt)
     local bubbles = self:GetParent():GetChildren()
+    local velocity = self.Direction * self.Speed
+    local subdivisions = math.floor(math.max(math.abs(velocity.X), math.abs(velocity.Y)) + 1)
 
-    if self.Health < 0 or (self.Velocity <= 0 and self.Health == 0) then
+    if self.Health < 0 or (self.Speed <= 0 and self.Health == 0) then
         self:Pop()
         
-    elseif self.Velocity > 0 then
-
-        if self.Velocity > 1.5 or
-            self.Velocity > 1 and math.random(3) == 2 or
-            self.Velocity > 0.5 and math.random(8) == 4 then
+    elseif self.Speed > 0 then
+        if self.Speed > 1.5 or
+            self.Speed > 1 and math.random(3) == 2 or
+            self.Speed > 0.5 and math.random(8) == 4 then
             self:GetLayer():GetChild("BubbleParticle"):Emit{
                 Position = self.Position + V{0, 1} + V{math.random(-3, 3), math.random(-3, 3)},
                 Size = V{1, 1} * math.random(1, 3),
@@ -144,24 +145,11 @@ function Bubble:Update(dt)
             }
         end
         
-        self:BallToInteractableCollision()
-
-        local posDelta = self.Direction * self.Velocity
-        
-        local subdivisions = 1
-        if math.abs(posDelta.X) > MAX_X_DIST then
-            subdivisions = math.floor(1 + math.abs(posDelta.X) / MAX_X_DIST)
-        end
-    
-        if math.abs(posDelta.Y) > MAX_Y_DIST then
-            subdivisions = math.max(subdivisions, math.floor(1 + math.abs(posDelta.Y) / MAX_Y_DIST))
-        end
-
-        self.Velocity = self.Velocity - self.DecelSpeed
+        self:BallToInteractableCollision()        
         
         local collisions = {}
         for _ = 1, subdivisions do
-            self.Position = self.Position + posDelta/subdivisions
+            self.Position = self.Position + velocity/subdivisions
             for i, ball in ipairs(bubbles) do
                 if ball ~= self and (ball.Position - self.Position):Magnitude() < Bubble.Threshold then
                     collisions[#collisions + 1] = ball
@@ -169,47 +157,61 @@ function Bubble:Update(dt)
             end
     
             if #collisions > 0 then
-                local bubble = collisions[1]
-                
-                local vector1 = self.Direction * self.Velocity
-                local vector2 = bubble.Direction * bubble.Velocity
-                local n = (self.Position - bubble.Position):Normalize()
-    
-                local a1 = 0 + (vector1 * n)
-                local a2 = 0 + (vector2 * n)
-                local p = (2.0 * (a1 - a2))
-    
-                local newVector1 = vector1 - (n * p)
-                local newVector2 = vector2 + (n * p)
-    
-                self.Direction = newVector1:Normalize()
-                bubble.Direction = newVector2:Normalize()
-    
-                self.Velocity = newVector1:Magnitude() * 0.5
-                bubble.Velocity = newVector2:Magnitude() * 0.5
-    
-                self.Position = bubble.Position + (n * 16)
-    
-                self.Health = self.Health - 1
-                bubble.Health = bubble.Health - 1
+                local other = collisions[1]
 
+                self.Health = self.Health - 1
+                other.Health = other.Health - 1
+
+                if self.Health < 0 then
+                    self:Pop()
+                    break
+                end
+
+                if other.Health < 0 then
+                    other:Pop()
+                    break
+                end
+
+                local otherVelocity = other.Direction * other.Speed
+
+                local selfToOther = other.Position - self.Position
+                local selfToOtherVel = otherVelocity - velocity
+                local otherToSelf = self.Position - other.Position
+                local otherToSelfVel = velocity - otherVelocity
+
+                local selfDP = 0 + (otherToSelfVel * otherToSelf)
+                local otherDP = 0 + (selfToOtherVel * selfToOther)
+
+                local selfDP2 = (((0 + (velocity:Normalize() * otherToSelf:Normalize())) + 1) / 2) + 0.5
+    
+                local newSelfVelocity = (velocity * selfDP2) - (otherToSelf * (selfDP / (otherToSelf:Magnitude() * otherToSelf:Magnitude())))
+                local newOtherVelocity = otherVelocity - (selfToOther * (otherDP / (selfToOther:Magnitude() * selfToOther:Magnitude())))
+    
+                self.Direction = newSelfVelocity:Normalize()
+                self.Speed = newSelfVelocity:Magnitude() * 0.8
                 self.FramesSinceHit = 0
-                bubble.FramesSinceHit = 0
+
+                other.Direction = newOtherVelocity:Normalize()
+                other.Speed = newOtherVelocity:Magnitude() * 0.8
+                other.FramesSinceHit = 0
+
+                self.Position = other.Position + (otherToSelf:Normalize() * 16)
+
                 self:PlaySFX("Bump")
                 self:GetLayer():GetParent().Score = self:GetLayer():GetParent().Score + 10
-                if self.Velocity <= 1.2 then
-                    self:PlaySFX("LightClink")
-                else
-                    self:PlaySFX("Clink")
-                end
-                self:GetLayer():GetParent().ScreenShake = self:GetLayer():GetParent().ScreenShake + 0.2*self.Velocity
-               
+                self:GetLayer():GetParent().ScreenShake = self:GetLayer():GetParent().ScreenShake + 0.2 * self.Speed
+
+                local sfx = self.Speed <= 1.2 and "LightClink" or "Clink"
+                self:PlaySFX(sfx)
+                
                 break
             end
             
             local collided = self:BallToWallCollision()
             if collided then break end
         end
+
+        self.Speed = self.Speed - self.DecelSpeed
     end
 
     -- updating framevalues
@@ -252,21 +254,21 @@ function Bubble:Pop()
     end
     
     local bubbles = self:GetParent():GetChildren()
-    for i, ball in ipairs(bubbles) do
-        local vector = ball.Position - self.Position
-        
-        if vector:Magnitude() < 64 then
-            local vector1 = vector:Normalize() * (32 / vector:Magnitude())
-            local vector2 = ball.Direction * ball.Velocity
-            local n = vector:Normalize()
+    for i, other in ipairs(bubbles) do
+        local popToOther = other.Position - self.Position
 
-            local a1 = 0 + (vector1 * n)
-            local a2 = 0 + (vector2 * n)
-            local p = (2.0 * (a1 - a2))
+        if popToOther:Magnitude() < 64 then
+            local popVelocity = popToOther:Normalize() * (80 / math.max(16, popToOther:Magnitude()))
+            local otherVelocity = other.Direction * other.Speed
 
-            local newVector = vector2 + (n * p)
-            ball.Direction = newVector:Normalize()
-            ball.Velocity = newVector:Magnitude()
+            local popToOther = other.Position - self.Position
+            local popToOtherVel = otherVelocity - popVelocity
+
+            local otherDP = 0 + (popToOtherVel * popToOther)
+            local newOtherVelocity = otherVelocity - (popToOther * (otherDP / (popToOther:Magnitude() * popToOther:Magnitude())))
+
+            other.Direction = newOtherVelocity:Normalize()
+            other.Speed = newOtherVelocity:Magnitude() * 0.8
         end
     end
     
@@ -301,7 +303,7 @@ function Bubble:Draw(tx, ty)
     
     
     if self.FramesSinceHit == 1 then
-        self.DrawScale = V{1,1-self.Velocity/10}
+        self.DrawScale = V{1,1-self.Speed/10}
         self.Rotation = V{-dv.X, dv.Y}:ToAngle()
     else
         self.Rotation = math.lerp(self.Rotation, 0, 0.045, 0.02)
@@ -429,10 +431,10 @@ function Bubble:BallToWallCollision()
             self:SetEdge(face, self.Tilemap:GetEdge(face=="top" and "bottom" or "top", tileNo))
             self.Position.Y = self.Position.Y + (face=="top" and 1 or -1)
         end
-        self.Velocity = self.Velocity * 0.8
+        self.Speed = self.Speed * 0.8
         self.Health = self.Health - 1
         self.FramesSinceHit = 0
-        if self.Velocity <= 1.2 then
+        if self.Speed <= 1.2 then
             self:PlaySFX("LightClink")
         else
             self:PlaySFX("Clink")
